@@ -24,15 +24,18 @@ SECRET = os.getenv("SECRET")
 symbol = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
+# Сумма ставки
 maxposition = 0.03
+# процент падения после которого закрываем сделку
 stop_percent = 0.01  # 0.01=1%
+# условия пошагового выхода из сделки
 eth_proffit_array = [[20, 1], [40, 1], [60, 2], [80, 2], [100, 2], [150, 1], [200, 1], [200, 0]]
 proffit_array = copy.copy(eth_proffit_array)
 
 pointer = str(random.randint(1000, 9999))
 
 
-# Get last 500 kandels 5 minutes for Symbol
+# функция запрашивает с площадки последние 500 свечей за пять минут и возвращает датафрейм с нужными столбцами
 
 def get_futures_klines(symbol, limit=500):
     x = requests.get('https://binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
@@ -47,7 +50,10 @@ def get_futures_klines(symbol, limit=500):
     return (df)
 
 
-# Open position for Sybol with
+# функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
+# собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
+# close_price - берет текущую цену + 1%. Зачем нужен?
+# batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
 
 def open_position(symbol, s_l, quantity_l):
     prt('open: ' + symbol + ' quantity: ' + str(quantity_l))
@@ -87,7 +93,9 @@ def open_position(symbol, s_l, quantity_l):
         response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
 
 
-# Close position for symbol with quantity
+# функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
+# собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
+# https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
 def close_position(symbol, s_l, quantity_l):
     prt('close: ' + symbol + ' quantity: ' + str(quantity_l))
@@ -122,7 +130,7 @@ def close_position(symbol, s_l, quantity_l):
         print(response)
 
 
-# Find all opened positions
+# Функция принимает название валюты,  возвращает тип сделки,
 
 def get_opened_positions(symbol):
     status = client.futures_account()
@@ -151,6 +159,8 @@ def check_and_close_orders(symbol):
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
+# функция получает на вход название валюты, возвращает её текущую стоимость
+# client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
 def get_symbol_price(symbol):
     prices = client.get_all_tickers()
     df = pd.DataFrame(prices)
