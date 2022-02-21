@@ -2,7 +2,6 @@ import hmac
 import time
 import hashlib
 import requests
-import json
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 from pathlib import Path
@@ -31,6 +30,7 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 
 ''' ======  begin of functions, you don't need to touch ====== '''
+
 
 def hashing(query_string):
     return hmac.new(SECRET.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()

@@ -1,0 +1,16 @@
+# версия docker-compose
+version: '3.9'
+
+# имена и описания контейнеров, которые должны быть развёрнуты
+services:
+  bot:
+    image: binbot_image
+    container_name: binbot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./.env
+
+
