@@ -378,8 +378,8 @@ def main(step):
                             close_position(symbol, 'short', abs(round(maxposition * (contracts / 10), 3)))
                             del proffit_array[0]
 
-    except:
-        prt('\n\nSomething went wrong. Continuing...')
+    except Exception as e:
+        print(e)
 
 
 starttime = time.time()
