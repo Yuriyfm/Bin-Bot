@@ -2,7 +2,6 @@ import requests
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-import matplotlib.pyplot as plt
 import copy
 import time
 import random
@@ -14,22 +13,18 @@ from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from futures_sign import send_signed_request, send_public_request
 
 load_dotenv()
-env_path = Path('.')/'.env'
+env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
-
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-
-
-symbol = 'ETHUSDT'
+SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
-
 # Сумма ставки
 maxposition = 0.03
 # процент падения после которого закрываем сделку
 stop_percent = 0.01  # 0.01=1%
 # условия пошагового выхода из сделки
-eth_proffit_array = [[20, 1], [40, 1], [60, 2], [80, 2], [100, 2], [150, 1], [200, 1], [200, 0]]
+eth_proffit_array = [[20, 2], [40, 2], [60, 2], [80, 1], [100, 1], [150, 1], [200, 1]]
 proffit_array = copy.copy(eth_proffit_array)
 
 pointer = str(random.randint(1000, 9999))
@@ -47,7 +42,7 @@ def get_futures_klines(symbol, limit=500):
     df['low'] = df['low'].astype(float)
     df['close'] = df['close'].astype(float)
     df['volume'] = df['volume'].astype(float)
-    return (df)
+    return df
 
 
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -59,7 +54,7 @@ def open_position(symbol, s_l, quantity_l):
     prt('open: ' + symbol + ' quantity: ' + str(quantity_l))
     sprice = get_symbol_price(symbol)
 
-    if (s_l == 'long'):
+    if s_l == 'long':
         close_price = str(round(sprice * (1 + 0.01), 2))
         params = {
             "batchOrders": [
@@ -74,9 +69,9 @@ def open_position(symbol, s_l, quantity_l):
                 }
             ]
         }
-        response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+        responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
 
-    if (s_l == 'short'):
+    if s_l == 'short':
         close_price = str(round(sprice * (1 - 0.01), 2))
         params = {
             "batchOrders": [
@@ -90,7 +85,7 @@ def open_position(symbol, s_l, quantity_l):
                 }
             ]
         }
-        response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+        responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -102,7 +97,7 @@ def close_position(symbol, s_l, quantity_l):
 
     sprice = get_symbol_price(symbol)
 
-    if (s_l == 'long'):
+    if s_l == 'long':
         close_price = str(round(sprice * (1 - 0.01), 2))
         params = {
             "symbol": symbol,
@@ -112,10 +107,10 @@ def close_position(symbol, s_l, quantity_l):
             "timeInForce": "GTC",
             "price": close_price
         }
-        response = send_signed_request('POST', '/fapi/v1/order', params)
-        print(response)
+        responce = send_signed_request('POST', '/fapi/v1/order', params)
+        print(responce)
 
-    if (s_l == 'short'):
+    if s_l == 'short':
         close_price = str(round(sprice * (1 + 0.01), 2))
         params = {
 
@@ -126,8 +121,8 @@ def close_position(symbol, s_l, quantity_l):
             "timeInForce": "GTC",
             "price": close_price
         }
-        response = send_signed_request('POST', '/fapi/v1/order', params)
-        print(response)
+        responce = send_signed_request('POST', '/fapi/v1/order', params)
+        print(responce)
 
 
 # Функция принимает название валюты,  возвращает тип сделки,
@@ -146,16 +141,14 @@ def get_opened_positions(symbol):
         pos = "short"
     else:
         pos = ""
-    return ([pos, a, profit, leverage, balance, round(float(entryprice), 3), 0])
+    return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
 
 
 # Close all orders
 
 def check_and_close_orders(symbol):
-    global isStop
     a = client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
-        isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
@@ -204,9 +197,7 @@ def indATR(source_DF, n):
 def isLCC(DF, i):
     df = DF.copy()
     LCC = 0
-
-    if df['close'][i] <= df['close'][i + 1] and df['close'][i] <= df['close'][i - 1] \
-            and df['close'][i + 1] > df['close'][i - 1]:
+    if df['close'][i - 1] >= df['close'][i] <= df['close'][i + 1] and df['close'][i + 1] > df['close'][i - 1]:
         # найдено Дно
         LCC = i - 1
     return LCC
@@ -215,8 +206,7 @@ def isLCC(DF, i):
 def isHCC(DF, i):
     df = DF.copy()
     HCC = 0
-    if df['close'][i] >= df['close'][i + 1] and df['close'][i] >= df['close'][i - 1] and df['close'][i + 1] < \
-            df['close'][i - 1]:
+    if df['close'][i - 1] <= df['close'][i] >= df['close'][i + 1] and df['close'][i + 1] < df['close'][i - 1]:
         # найдена вершина
         HCC = i
     return HCC
@@ -230,7 +220,7 @@ def getMaxMinChannel(DF, n):
             maxx = DF['high'][len(DF) - i]
         if minn > DF['low'][len(DF) - i]:
             minn = DF['low'][len(DF) - i]
-    return (maxx, minn)
+    return maxx, minn
 
 
 # generate data frame with all needed data
@@ -246,7 +236,7 @@ def PrepareDF(DF):
     df['position_in_channel'] = (df['close'] - df['channel_min']) / (df['channel_max'] - df['channel_min'])
     df = df.set_index('date')
     df = df.reset_index()
-    return (df)
+    return df
 
 
 def check_if_signal(symbol):
@@ -279,11 +269,12 @@ telegram_delay = 12
 bot_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("CHAT_ID")
 
+
 def getTPSLfrom_telegram():
     strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
     response = requests.get(strr)
     rs = response.json()
-    if (len(rs['result']) > 0):
+    if len(rs['result']) > 0:
         rs2 = rs['result'][-1]
         rs3 = rs2['message']
         textt = rs3['text']
@@ -297,11 +288,11 @@ def getTPSLfrom_telegram():
             if 'hello' in textt:
                 telegram_bot_sendtext('Hello. How are you?')
             if 'close_pos' in textt:
-                position = get_opened_positions(symbol)
+                position = get_opened_positions(SYMBOL)
                 open_sl = position[0]
                 quantity = position[1]
                 #  print(open_sl,quantity)
-                close_position(symbol, open_sl, abs(quantity))
+                close_position(SYMBOL, open_sl, abs(quantity))
 
 
 def telegram_bot_sendtext(bot_message):
@@ -323,77 +314,90 @@ def main(step):
 
     try:
         getTPSLfrom_telegram()
-        position = get_opened_positions(symbol)
+        position = get_opened_positions(SYMBOL)
         open_sl = position[0]
         if open_sl == "":  # no position
-            prt('Нет открытых позиций')
+            if step % 20 == 0:
+                prt('Нет открытых позиций')
             # close all stop loss orders
-            check_and_close_orders(symbol)
-            signal = check_if_signal(symbol)
+            check_and_close_orders(SYMBOL)
+            signal = check_if_signal(SYMBOL)
             proffit_array = copy.copy(eth_proffit_array)
 
             if signal == 'long':
-                open_position(symbol, 'long', maxposition)
+                open_position(SYMBOL, 'long', maxposition)
+                prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
             elif signal == 'short':
-                open_position(symbol, 'short', maxposition)
+                open_position(SYMBOL, 'short', maxposition)
+                prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
         else:
 
             entry_price = position[5]  # enter price
-            current_price = get_symbol_price(symbol)
+            current_price = get_symbol_price(SYMBOL)
             quantity = position[1]
-
-            prt('Найдена открытая позиция ' + open_sl)
-            prt('Кол-во: ' + str(quantity))
+            if step % 20 == 0:
+                prt('Есть открытая позиция ' + open_sl)
+                prt(f'Кол-во: {str(quantity)}\nВход: {entry_price}\nТекущий прайс: {current_price}')
 
             if open_sl == 'long':
                 stop_price = entry_price * (1 - stop_percent)
                 if current_price < stop_price:
                     # stop loss
-                    close_position(symbol, 'long', abs(quantity))
+                    prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
+                        f'Минус USD: {quantity * current_price * (1- current_price / entry_price)}\nМинус %: {(1 - current_price / entry_price) * 100}')
+                    close_position(SYMBOL, 'long', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
                         delta = temp_arr[j][0]
                         contracts = temp_arr[j][1]
-                        if (current_price > (entry_price + delta)):
+                        if current_price > (entry_price + delta):
                             # take profit
-                            close_position(symbol, 'long', abs(round(maxposition * (contracts / 10), 3)))
+                            prt(f'Закрыл {open_sl} {contracts * 10}% от {str(quantity)} в плюс\nВход: {entry_price}\n'
+                                f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1- current_price / entry_price))}\n'
+                                f'Плюс %: {(abs(1- current_price / entry_price)) * 100 * (contracts / 10)}')
+                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
                             del proffit_array[0]
 
             if open_sl == 'short':
                 stop_price = entry_price * (1 + stop_percent)
                 if current_price > stop_price:
                     # stop loss
-                    close_position(symbol, 'short', abs(quantity))
+                    prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
+                        f'Минус USD: {quantity * current_price * (abs(1- current_price / entry_price))}\nМинус %: {(abs(1- current_price / entry_price)) * 100}')
+                    close_position(SYMBOL, 'short', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
                         delta = temp_arr[j][0]
                         contracts = temp_arr[j][1]
-                        if (current_price < (entry_price - delta)):
+                        if current_price < (entry_price - delta):
                             # take profit
-                            close_position(symbol, 'short', abs(round(maxposition * (contracts / 10), 3)))
+                            prt(f'Закрыл {open_sl} {contracts * 10}% от {str(quantity)} в плюс\nВход: {entry_price}\n'
+                                f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1- current_price / entry_price))}\n'
+                                f'Плюс %: {(abs( 1- current_price / entry_price)) * 100 * (contracts / 10)}')
+                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
                             del proffit_array[0]
-
     except Exception as e:
-        print(e)
+        prt(f'{e}')
 
 
 starttime = time.time()
-timeout = time.time() + 60 * 60 * 12  # 60 seconds times 60 meaning the script will run for 12 hr
+timeout = time.time() + 60 * 60 * 120  # таймер работы бота - 120 часов (5 суток)
 counterr = 1
 
 while time.time() <= timeout:
     try:
-        prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+        if counterr % 20 == 0:
+            prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counterr)
         counterr = counterr + 1
-        if counterr > 5:
+        if counterr > 20:
             counterr = 1
-        time.sleep(60 - ((time.time() - starttime) % 60.0))  # 1 minute interval between each new execution
+        time.sleep(30 - ((time.time() - starttime) % 30.0))  # запрос к площадке 2 раза в минуту
     except KeyboardInterrupt:
-        print('\n\KeyboardInterrupt. Stopping.')
+        print('\n KeyboardInterrupt. Stopping.')
         exit()
