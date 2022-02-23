@@ -33,17 +33,19 @@ pointer = str(random.randint(1000, 9999))
 # функция запрашивает с площадки последние 500 свечей за пять минут и возвращает датафрейм с нужными столбцами
 
 def get_futures_klines(symbol, limit=500):
-    x = requests.get('https://binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
-    df = pd.DataFrame(x.json())
-    df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
-    df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
-    df['open'] = df['open'].astype(float)
-    df['high'] = df['high'].astype(float)
-    df['low'] = df['low'].astype(float)
-    df['close'] = df['close'].astype(float)
-    df['volume'] = df['volume'].astype(float)
-    return df
-
+    try:
+        x = requests.get('https://binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
+        df = pd.DataFrame(x.json())
+        df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
+        df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
+        df['open'] = df['open'].astype(float)
+        df['high'] = df['high'].astype(float)
+        df['low'] = df['low'].astype(float)
+        df['close'] = df['close'].astype(float)
+        df['volume'] = df['volume'].astype(float)
+        return df
+    except Exception as e:
+        prt(f'Ошибка при получении истории последних свечей: \n{e}')
 
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
 # собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
@@ -51,41 +53,45 @@ def get_futures_klines(symbol, limit=500):
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
 
 def open_position(symbol, s_l, quantity_l):
-    prt('open: ' + symbol + ' quantity: ' + str(quantity_l))
-    sprice = get_symbol_price(symbol)
+    try:
+        prt('open: ' + symbol + ' quantity: ' + str(quantity_l))
+        sprice = get_symbol_price(symbol)
 
-    if s_l == 'long':
-        close_price = str(round(sprice * (1 + 0.01), 2))
-        params = {
-            "batchOrders": [
-                {
-                    "symbol": symbol,
-                    "side": "BUY",
-                    "type": "LIMIT",
-                    "quantity": str(quantity_l),
-                    "timeInForce": "GTC",
-                    "price": close_price
+        if s_l == 'long':
+            close_price = str(round(sprice * (1 + 0.01), 2))
+            params = {
+                "batchOrders": [
+                    {
+                        "symbol": symbol,
+                        "side": "BUY",
+                        "type": "LIMIT",
+                        "quantity": str(quantity_l),
+                        "timeInForce": "GTC",
+                        "price": close_price
 
-                }
-            ]
-        }
-        responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+                    }
+                ]
+            }
+            responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
 
-    if s_l == 'short':
-        close_price = str(round(sprice * (1 - 0.01), 2))
-        params = {
-            "batchOrders": [
-                {
-                    "symbol": symbol,
-                    "side": "SELL",
-                    "type": "LIMIT",
-                    "quantity": str(quantity_l),
-                    "timeInForce": "GTC",
-                    "price": close_price
-                }
-            ]
-        }
-        responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+        if s_l == 'short':
+            close_price = str(round(sprice * (1 - 0.01), 2))
+            params = {
+                "batchOrders": [
+                    {
+                        "symbol": symbol,
+                        "side": "SELL",
+                        "type": "LIMIT",
+                        "quantity": str(quantity_l),
+                        "timeInForce": "GTC",
+                        "price": close_price
+                    }
+                ]
+            }
+            responce = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+    except Exception as e:
+        prt(f'Ошибка открытия позиции: \n{e}')
+
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -93,55 +99,61 @@ def open_position(symbol, s_l, quantity_l):
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
 def close_position(symbol, s_l, quantity_l):
-    prt('close: ' + symbol + ' quantity: ' + str(quantity_l))
+    try:
+        prt('close: ' + symbol + ' quantity: ' + str(quantity_l))
 
-    sprice = get_symbol_price(symbol)
+        sprice = get_symbol_price(symbol)
 
-    if s_l == 'long':
-        close_price = str(round(sprice * (1 - 0.01), 2))
-        params = {
-            "symbol": symbol,
-            "side": "SELL",
-            "type": "LIMIT",
-            "quantity": str(quantity_l),
-            "timeInForce": "GTC",
-            "price": close_price
-        }
-        responce = send_signed_request('POST', '/fapi/v1/order', params)
-        print(responce)
+        if s_l == 'long':
+            close_price = str(round(sprice * (1 - 0.01), 2))
+            params = {
+                "symbol": symbol,
+                "side": "SELL",
+                "type": "LIMIT",
+                "quantity": str(quantity_l),
+                "timeInForce": "GTC",
+                "price": close_price
+            }
+            responce = send_signed_request('POST', '/fapi/v1/order', params)
+            print(responce)
 
-    if s_l == 'short':
-        close_price = str(round(sprice * (1 + 0.01), 2))
-        params = {
+        if s_l == 'short':
+            close_price = str(round(sprice * (1 + 0.01), 2))
+            params = {
 
-            "symbol": symbol,
-            "side": "BUY",
-            "type": "LIMIT",
-            "quantity": str(quantity_l),
-            "timeInForce": "GTC",
-            "price": close_price
-        }
-        responce = send_signed_request('POST', '/fapi/v1/order', params)
-        print(responce)
-
+                "symbol": symbol,
+                "side": "BUY",
+                "type": "LIMIT",
+                "quantity": str(quantity_l),
+                "timeInForce": "GTC",
+                "price": close_price
+            }
+            responce = send_signed_request('POST', '/fapi/v1/order', params)
+            print(responce)
+    except Exception as e:
+        prt(f'Ошибка закрытия позиции: \n{e}')
 
 # Функция принимает название валюты,  возвращает тип сделки,
 
+
 def get_opened_positions(symbol):
-    status = client.futures_account()
-    positions = pd.DataFrame(status['positions'])
-    a = positions[positions['symbol'] == symbol]['positionAmt'].astype(float).tolist()[0]
-    leverage = int(positions[positions['symbol'] == symbol]['leverage'])
-    entryprice = positions[positions['symbol'] == symbol]['entryPrice']
-    profit = float(status['totalUnrealizedProfit'])
-    balance = round(float(status['totalWalletBalance']), 2)
-    if a > 0:
-        pos = "long"
-    elif a < 0:
-        pos = "short"
-    else:
-        pos = ""
-    return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
+    try:
+        status = client.futures_account()
+        positions = pd.DataFrame(status['positions'])
+        a = positions[positions['symbol'] == symbol]['positionAmt'].astype(float).tolist()[0]
+        leverage = int(positions[positions['symbol'] == symbol]['leverage'])
+        entryprice = positions[positions['symbol'] == symbol]['entryPrice']
+        profit = float(status['totalUnrealizedProfit'])
+        balance = round(float(status['totalWalletBalance']), 2)
+        if a > 0:
+            pos = "long"
+        elif a < 0:
+            pos = "short"
+        else:
+            pos = ""
+        return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
+    except Exception as e:
+        prt(f'Ошибка при получении данных по открытой позиции: \n{e}')
 
 
 # Close all orders
@@ -240,29 +252,32 @@ def PrepareDF(DF):
 
 
 def check_if_signal(symbol):
-    ohlc = get_futures_klines(symbol, 100)
-    prepared_df = PrepareDF(ohlc)
-    signal = ""  # return value
+    try:
+        ohlc = get_futures_klines(symbol, 100)
+        prepared_df = PrepareDF(ohlc)
+        signal = ""  # return value
 
-    i = 98  # 99 is current kandel which is not closed, 98 is last closed candel, we need 97 to check if it is bottom or top
+        i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-    if isLCC(prepared_df, i - 1) > 0:
-        # found bottom - OPEN LONG
-        if prepared_df['position_in_channel'][i - 1] < 0.5:
-            # close to top of channel
-            if prepared_df['slope'][i - 1] < -20:
-                # found a good enter point for LONG
-                signal = 'long'
+        if isLCC(prepared_df, i - 1) > 0:
+            # found bottom - OPEN LONG
+            if prepared_df['position_in_channel'][i - 1] < 0.5:
+                # close to top of channel
+                if prepared_df['slope'][i - 1] < -20:
+                    # found a good enter point for LONG
+                    signal = 'long'
 
-    if isHCC(prepared_df, i - 1) > 0:
-        # found top - OPEN SHORT
-        if prepared_df['position_in_channel'][i - 1] > 0.5:
-            # close to top of channel
-            if prepared_df['slope'][i - 1] > 20:
-                # found a good enter point for SHORT
-                signal = 'short'
+            if isHCC(prepared_df, i - 1) > 0:
+                # found top - OPEN SHORT
+                if prepared_df['position_in_channel'][i - 1] > 0.5:
+                    # close to top of channel
+                    if prepared_df['slope'][i - 1] > 20:
+                        # found a good enter point for SHORT
+                        signal = 'short'
 
-    return signal
+        return signal
+    except Exception as e:
+        prt(f'Ошибка в функции проверки сигнала: \n{e}')
 
 
 telegram_delay = 12
@@ -271,37 +286,41 @@ chat_id = os.getenv("CHAT_ID")
 
 
 def getTPSLfrom_telegram():
-    strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
-    response = requests.get(strr)
-    rs = response.json()
-    if len(rs['result']) > 0:
-        rs2 = rs['result'][-1]
-        rs3 = rs2['message']
-        textt = rs3['text']
-        datet = rs3['date']
+    try:
+        strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
+        response = requests.get(strr)
+        rs = response.json()
+        if len(rs['result']) > 0:
+            rs2 = rs['result'][-1]
+            rs3 = rs2['message']
+            textt = rs3['text']
+            datet = rs3['date']
 
-        if (time.time() - datet) < telegram_delay:
-            if 'quit' in textt:
-                quit()
-            if 'exit' in textt:
-                exit()
-            if 'hello' in textt:
-                telegram_bot_sendtext('Hello. How are you?')
-            if 'close_pos' in textt:
-                position = get_opened_positions(SYMBOL)
-                open_sl = position[0]
-                quantity = position[1]
-                #  print(open_sl,quantity)
-                close_position(SYMBOL, open_sl, abs(quantity))
-
+            if (time.time() - datet) < telegram_delay:
+                if 'quit' in textt:
+                    quit()
+                if 'exit' in textt:
+                    exit()
+                if 'hello' in textt:
+                    telegram_bot_sendtext('Hello. How are you?')
+                if 'close_pos' in textt:
+                    position = get_opened_positions(SYMBOL)
+                    open_sl = position[0]
+                    quantity = position[1]
+                    #  print(open_sl,quantity)
+                    close_position(SYMBOL, open_sl, abs(quantity))
+    except Exception as e:
+        print(f'Ошибка подключения к телеграм: \n{e}')
 
 def telegram_bot_sendtext(bot_message):
-    bot_token2 = bot_token
-    bot_chatID = chat_id
-    send_text = 'https://api.telegram.org/bot' + bot_token2 + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
-    response = requests.get(send_text)
-    return response.json()
-
+    try:
+        bot_token2 = bot_token
+        bot_chatID = chat_id
+        send_text = 'https://api.telegram.org/bot' + bot_token2 + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
+        response = requests.get(send_text)
+        return response.json()
+    except Exception as e:
+        print(f'Ошибка отправки сообщения в телеграм: \n{e}')
 
 def prt(message):
     # telegram message
@@ -382,7 +401,7 @@ def main(step):
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
                             del proffit_array[0]
     except Exception as e:
-        prt(f'{e}')
+        prt(f'Ошибка в main: \n{e}')
 
 
 starttime = time.time()
