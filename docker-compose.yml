@@ -3,14 +3,22 @@ version: '3.7'
 
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
-  bot:
+  origin_bot:
     image: binbot_image
-    container_name: binbot
+    container_name: origin_bot
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.origin
     restart: always
     env_file:
       - ./.env
-
+  modify_bot:
+    image: binbot_image
+    container_name: modify_bot
+    build:
+      context: .
+      dockerfile: Dockerfile.modify
+    restart: always
+    env_file:
+      - ./.env
 

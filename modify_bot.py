@@ -19,12 +19,23 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
-# Сумма ставки
+SLOPE = 18
+POS_IN_CHANNEL = 0.6
+
+# функция получает на вход название валюты, возвращает её текущую стоимость
+# client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
+def get_symbol_price(symbol):
+    prices = client.get_all_tickers()
+    df = pd.DataFrame(prices)
+    return float(df[df['symbol'] == symbol]['price'])
+
+current_price = get_symbol_price(SYMBOL)
 maxposition = 0.05
-# процент падения после которого закрываем сделку
-stop_percent = 0.01  # 0.01=1%
-# условия пошагового выхода из сделки
-eth_proffit_array = [[20, 2], [40, 2], [60, 2], [80, 1], [100, 1], [150, 1], [200, 1]]
+stop_percent = 0.004
+# 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
+eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.05), 3], [round(current_price * 0.07), 2],
+                     [round(current_price * 0.09), 1], [round(current_price * 0.11), 1], [round(current_price * 0.13), 1]]
+
 proffit_array = copy.copy(eth_proffit_array)
 
 pointer = str(random.randint(1000, 9999))
@@ -59,7 +70,7 @@ def open_position(symbol, s_l, quantity_l):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), 2))
+            close_price = str(round(sprice * (1 - stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
@@ -78,7 +89,7 @@ def open_position(symbol, s_l, quantity_l):
                 prt(f'Открыл {s_l} на {maxposition} {SYMBOL}')
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 - stop_percent), 2))
+            close_price = str(round(sprice * (1 + stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
@@ -107,7 +118,7 @@ def close_position(symbol, s_l, quantity_l):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - 0.01), 2))
+            close_price = str(round(sprice * (1 - stop_percent), 2))
             params = {
                 "symbol": symbol,
                 "side": "SELL",
@@ -120,7 +131,7 @@ def close_position(symbol, s_l, quantity_l):
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + 0.01), 2))
+            close_price = str(round(sprice * (1 + stop_percent), 2))
             params = {
 
                 "symbol": symbol,
@@ -164,12 +175,7 @@ def check_and_close_orders(symbol):
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
-# функция получает на вход название валюты, возвращает её текущую стоимость
-# client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
-def get_symbol_price(symbol):
-    prices = client.get_all_tickers()
-    df = pd.DataFrame(prices)
-    return float(df[df['symbol'] == symbol]['price'])
+
 
 
 # INDICATORS
@@ -266,17 +272,17 @@ def check_if_signal(symbol):
 
         if isLCC(prepared_df, i - 1) > 0:
             # found bottom - OPEN LONG
-            if prepared_df['position_in_channel'][i - 1] < 0.5:
+            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL:
                 # close to top of channel
-                if prepared_df['slope'][i - 1] < -20:
+                if prepared_df['slope'][i - 1] < -SLOPE:
                     # found a good enter point for LONG
                     signal = 'long'
 
             if isHCC(prepared_df, i - 1) > 0:
                 # found top - OPEN SHORT
-                if prepared_df['position_in_channel'][i - 1] > 0.5:
+                if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL:
                     # close to top of channel
-                    if prepared_df['slope'][i - 1] > 20:
+                    if prepared_df['slope'][i - 1] > SLOPE:
                         # found a good enter point for SHORT
                         signal = 'short'
 
@@ -345,7 +351,7 @@ def main(step):
         position = get_opened_positions(SYMBOL)
         open_sl = position[0]
         if open_sl == "":  # no position
-            if step % 20 == 0:
+            if step % 20 == 0 or step == 1:
                 prt('Нет открытых позиций')
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
@@ -363,7 +369,7 @@ def main(step):
             entry_price = position[5]  # enter price
             current_price = get_symbol_price(SYMBOL)
             quantity = position[1]
-            if step % 20 == 0:
+            if step % 20 == 0 or step == 1:
                 prt('Есть открытая позиция ' + open_sl)
                 prt(f'Кол-во: {str(quantity)}\nВход: {entry_price}\nТекущий прайс: {current_price}')
 
@@ -418,7 +424,7 @@ counterr = 1
 
 while time.time() <= timeout:
     try:
-        if counterr % 20 == 0:
+        if counterr % 20 == 0 or counterr == 1:
             prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counterr)
         counterr = counterr + 1
