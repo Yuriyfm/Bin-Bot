@@ -278,13 +278,13 @@ def check_if_signal(symbol):
                     # found a good enter point for LONG
                     signal = 'long'
 
-            if isHCC(prepared_df, i - 1) > 0:
-                # found top - OPEN SHORT
-                if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL:
-                    # close to top of channel
-                    if prepared_df['slope'][i - 1] > SLOPE:
-                        # found a good enter point for SHORT
-                        signal = 'short'
+        if isHCC(prepared_df, i - 1) > 0:
+            # found top - OPEN SHORT
+            if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL:
+                # close to top of channel
+                if prepared_df['slope'][i - 1] > SLOPE:
+                    # found a good enter point for SHORT
+                    signal = 'short'
 
         return signal
     except Exception as e:
