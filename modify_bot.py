@@ -70,7 +70,7 @@ def open_position(symbol, s_l, quantity_l):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - stop_percent), 2))
+            close_price = str(round(sprice * (1 + stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
@@ -89,7 +89,7 @@ def open_position(symbol, s_l, quantity_l):
                 prt(f'Открыл {s_l} на {maxposition} {SYMBOL}')
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + stop_percent), 2))
+            close_price = str(round(sprice * (1 - stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
@@ -170,12 +170,11 @@ def get_opened_positions(symbol):
 # Close all orders
 
 def check_and_close_orders(symbol):
-    a = client.futures_get_open_orders(symbol=symbol)
+    global isStop
+    a=client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
+        isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
-
-
-
 
 
 # INDICATORS
@@ -220,7 +219,7 @@ def isLCC(DF, i):
     LCC = 0
     if df['close'][i - 1] >= df['close'][i] <= df['close'][i + 1] and df['close'][i + 1] > df['close'][i - 1]:
         # найдено Дно
-        LCC = i
+        LCC = i - 1
     return LCC
 
 
@@ -250,7 +249,7 @@ def PrepareDF(DF):
     ohlc = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
     ohlc.columns = ["date", "open", "high", "low", "close", "volume"]
     ohlc = ohlc.set_index('date')
-    df = indATR(ohlc, 14).reset_index()
+    df = indATR(ohlc, 14).reset_index() #считаем ATR по последним 14 свечам
     df['slope'] = indSlope(df['close'], 5) #считаем угол наклона
     df['channel_max'] = df['high'].rolling(10).max() #считаем верхнюю границу канала
     df['channel_min'] = df['low'].rolling(10).min() #считаем нижнюю границу канала

@@ -24,7 +24,7 @@ maxposition = 0.05
 # процент падения после которого закрываем сделку
 stop_percent = 0.01  # 0.01=1%
 # условия пошагового выхода из сделки
-eth_proffit_array = [[20, 2], [40, 2], [60, 2], [80, 1], [100, 1], [150, 1], [200, 1]]
+eth_proffit_array = [[20, 2], [40, 2], [60, 2], [80, 1], [100, 1], [150, 2]]
 proffit_array = copy.copy(eth_proffit_array)
 
 pointer = str(random.randint(1000, 9999))
@@ -107,7 +107,7 @@ def close_position(symbol, s_l, quantity_l):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - 0.01), 2))
+            close_price = str(round(sprice * (1 - stop_percent), 2))
             params = {
                 "symbol": symbol,
                 "side": "SELL",
@@ -120,7 +120,7 @@ def close_position(symbol, s_l, quantity_l):
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + 0.01), 2))
+            close_price = str(round(sprice * (1 + stop_percent), 2))
             params = {
 
                 "symbol": symbol,
@@ -159,8 +159,10 @@ def get_opened_positions(symbol):
 # Close all orders
 
 def check_and_close_orders(symbol):
-    a = client.futures_get_open_orders(symbol=symbol)
+    global isStop
+    a=client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
+        isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
@@ -214,7 +216,7 @@ def isLCC(DF, i):
     LCC = 0
     if df['close'][i - 1] >= df['close'][i] <= df['close'][i + 1] and df['close'][i + 1] > df['close'][i - 1]:
         # найдено Дно
-        LCC = i
+        LCC = i - 1
     return LCC
 
 
