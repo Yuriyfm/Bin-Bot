@@ -17,10 +17,11 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = 'BTCUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 18
-POS_IN_CHANNEL = 0.6
+SLOPE = 22
+POS_IN_CHANNEL = 0.4
+
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -29,12 +30,22 @@ def get_symbol_price(symbol):
     df = pd.DataFrame(prices)
     return float(df[df['symbol'] == symbol]['price'])
 
+
+def get_wallet_balance():
+    status = client.futures_account()
+    balance = round(float(status['totalWalletBalance']), 2)
+    return balance
+
+
 current_price = get_symbol_price(SYMBOL)
-maxposition = 0.05
-stop_percent = 0.004
+balance = get_wallet_balance()
+maxposition = balance * 0.45
+stop_percent = 0.006
 # 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
-eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.05), 3], [round(current_price * 0.07), 2],
-                     [round(current_price * 0.09), 1], [round(current_price * 0.11), 1], [round(current_price * 0.13), 1]]
+eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.05), 3],
+                     [round(current_price * 0.07), 2],
+                     [round(current_price * 0.09), 1], [round(current_price * 0.11), 1],
+                     [round(current_price * 0.13), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -171,7 +182,7 @@ def get_opened_positions(symbol):
 
 def check_and_close_orders(symbol):
     global isStop
-    a=client.futures_get_open_orders(symbol=symbol)
+    a = client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
         isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
@@ -184,8 +195,8 @@ def indSlope(series, n):
     array_sl = [j * 0 for j in range(n - 1)]
 
     for j in range(n, len(series) + 1):
-        y = series[j - n:j] # итоговые значения первых n свечей
-        x = np.array(range(n)) # массив [1, 2, 3, ... n-1]
+        y = series[j - n:j]  # итоговые значения первых n свечей
+        x = np.array(range(n))  # массив [1, 2, 3, ... n-1]
         x_sc = (x - x.min()) / (x.max() - x.min())
         y_sc = (y - y.min()) / (y.max() - y.min())
         x_sc = sm.add_constant(x_sc)
@@ -249,11 +260,12 @@ def PrepareDF(DF):
     ohlc = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
     ohlc.columns = ["date", "open", "high", "low", "close", "volume"]
     ohlc = ohlc.set_index('date')
-    df = indATR(ohlc, 14).reset_index() #считаем ATR по последним 14 свечам
-    df['slope'] = indSlope(df['close'], 5) #считаем угол наклона
-    df['channel_max'] = df['high'].rolling(10).max() #считаем верхнюю границу канала
-    df['channel_min'] = df['low'].rolling(10).min() #считаем нижнюю границу канала
-    df['position_in_channel'] = (df['close'] - df['channel_min']) / (df['channel_max'] - df['channel_min']) #считаем позицию в канале
+    df = indATR(ohlc, 14).reset_index()  # считаем ATR по последним 14 свечам
+    df['slope'] = indSlope(df['close'], 5)  # считаем угол наклона
+    df['channel_max'] = df['high'].rolling(10).max()  # считаем верхнюю границу канала
+    df['channel_min'] = df['low'].rolling(10).min()  # считаем нижнюю границу канала
+    df['position_in_channel'] = (df['close'] - df['channel_min']) / (
+                df['channel_max'] - df['channel_min'])  # считаем позицию в канале
     df = df.set_index('date')
     df = df.reset_index()
     return df

@@ -8,7 +8,7 @@ services:
     container_name: origin_bot
     build:
       context: .
-      dockerfile: Dockerfile.origin
+      dockerfile: Dockerfile.btc
     restart: always
     env_file:
       - ./.env
@@ -17,7 +17,7 @@ services:
     container_name: modify_bot
     build:
       context: .
-      dockerfile: Dockerfile.modify
+      dockerfile: Dockerfile.eth
     restart: always
     env_file:
       - ./.env

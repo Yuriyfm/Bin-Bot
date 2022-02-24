@@ -10,4 +10,4 @@ COPY . /binbot
 
 WORKDIR /binbot
 
-CMD [ "python", "./modify_bot.py" ]
+CMD [ "python", "./btc_bot.py" ]
