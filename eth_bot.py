@@ -39,13 +39,13 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = balance * 0.45
+maxposition = 0.025
 stop_percent = 0.006
 # 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
-eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.05), 3],
-                     [round(current_price * 0.07), 2],
-                     [round(current_price * 0.09), 1], [round(current_price * 0.11), 1],
-                     [round(current_price * 0.13), 1]]
+eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
+                     [round(current_price * 0.007), 2],
+                     [round(current_price * 0.009), 1], [round(current_price * 0.011), 1],
+                     [round(current_price * 0.013), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 

@@ -39,13 +39,13 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = balance * 0.45
+maxposition = 0.001
 stop_percent = 0.006
 # 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
-eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.05), 3],
-                     [round(current_price * 0.07), 2],
-                     [round(current_price * 0.09), 1], [round(current_price * 0.11), 1],
-                     [round(current_price * 0.13), 1]]
+eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
+                     [round(current_price * 0.007), 2],
+                     [round(current_price * 0.009), 1], [round(current_price * 0.011), 1],
+                     [round(current_price * 0.013), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -96,6 +96,7 @@ def open_position(symbol, s_l, quantity_l):
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+            print(response)
 
         if s_l == 'short':
             close_price = str(round(sprice * (1 - stop_percent), 2))
@@ -112,7 +113,7 @@ def open_position(symbol, s_l, quantity_l):
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-
+            print(response)
     except Exception as e:
         prt(f'Ошибка открытия позиции: \n{e}')
 
@@ -357,7 +358,8 @@ def main(step):
     try:
         getTPSLfrom_telegram()
         position = get_opened_positions(SYMBOL)
-        open_sl = position[0]
+        # open_sl = position[0]
+        open_sl = 'long'
         if open_sl == "":  # no position
             if step % 20 == 0 or step == 1:
                 prt('Нет открытых позиций')
