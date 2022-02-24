@@ -5,7 +5,7 @@ version: '3.7'
 services:
   origin_bot:
     image: binbot_image
-    container_name: origin_bot
+    container_name: btc_bot
     build:
       context: .
       dockerfile: Dockerfile.btc
@@ -14,7 +14,7 @@ services:
       - ./.env
   modify_bot:
     image: binbot_image
-    container_name: modify_bot
+    container_name: eth_bot
     build:
       context: .
       dockerfile: Dockerfile.eth

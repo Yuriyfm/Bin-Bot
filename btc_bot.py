@@ -49,7 +49,7 @@ eth_proffit_array = [[round(current_price * 0.03), 2], [round(current_price * 0.
 
 proffit_array = copy.copy(eth_proffit_array)
 
-pointer = str(random.randint(1000, 9999))
+pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 
 
 # функция запрашивает с площадки последние 500 свечей за пять минут и возвращает датафрейм с нужными столбцами
@@ -96,8 +96,6 @@ def open_position(symbol, s_l, quantity_l):
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            if response[0]['status'] == 'NEW':
-                prt(f'Открыл {s_l} на {maxposition} {SYMBOL}')
 
         if s_l == 'short':
             close_price = str(round(sprice * (1 - stop_percent), 2))
@@ -114,8 +112,7 @@ def open_position(symbol, s_l, quantity_l):
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            if response[0]['status'] == 'NEW':
-                prt(f'Открыл {s_l} на {maxposition} {SYMBOL}')
+
     except Exception as e:
         prt(f'Ошибка открытия позиции: \n{e}')
 
@@ -371,9 +368,11 @@ def main(step):
 
             if signal == 'long':
                 open_position(SYMBOL, 'long', maxposition)
+                prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
             elif signal == 'short':
                 open_position(SYMBOL, 'short', maxposition)
+                prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
         else:
 
