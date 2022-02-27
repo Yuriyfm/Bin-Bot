@@ -39,13 +39,13 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = 0.001
+maxposition = round((balance * 0.6) / current_price, 3)
 stop_percent = 0.006
 # 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
-eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
-                     [round(current_price * 0.007), 2],
-                     [round(current_price * 0.009), 1], [round(current_price * 0.011), 1],
-                     [round(current_price * 0.013), 1]]
+eth_proffit_array = [[round(current_price * 0.0015), 2], [round(current_price * 0.003), 3],
+                     [round(current_price * 0.0045), 2],
+                     [round(current_price * 0.006), 1], [round(current_price * 0.0075), 1],
+                     [round(current_price * 0.009), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -179,10 +179,8 @@ def get_opened_positions(symbol):
 # Close all orders
 
 def check_and_close_orders(symbol):
-    global isStop
     a = client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
-        isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
@@ -358,14 +356,14 @@ def main(step):
     try:
         getTPSLfrom_telegram()
         position = get_opened_positions(SYMBOL)
-        # open_sl = position[0]
-        open_sl = 'long'
+        open_sl = position[0]
         if open_sl == "":  # no position
             if step % 20 == 0 or step == 1:
                 prt('Нет открытых позиций')
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL)
+            signal = 'long'
             proffit_array = copy.copy(eth_proffit_array)
 
             if signal == 'long':
