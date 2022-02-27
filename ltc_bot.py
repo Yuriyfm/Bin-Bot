@@ -17,7 +17,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
 SLOPE = 18
 POS_IN_CHANNEL = 0.6
@@ -39,12 +39,12 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.3) / current_price, 2)
+maxposition = round((balance * 0.3) / current_price, 3)
 stop_percent = 0.006
 
-eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
-                     [round(current_price * 0.007), 3],
-                     [round(current_price * 0.009), 1], [round(current_price * 0.011), 1]]
+eth_proffit_array = [[round(current_price * 0.003, 3), 2], [round(current_price * 0.005, 3), 3],
+                     [round(current_price * 0.007, 3), 3],
+                     [round(current_price * 0.009, 3), 1], [round(current_price * 0.011, 3), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -178,15 +178,12 @@ def get_opened_positions(symbol):
 # Close all orders
 
 def check_and_close_orders(symbol):
-    # global isStop
     a = client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
-        # isStop = False
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
 # INDICATORS
-
 
 # функция принимает итоговые значения свечей и количество свечей по которым будет считать угол наклона
 def indSlope(series, n):
@@ -374,6 +371,7 @@ def main(step):
             elif signal == 'short':
                 open_position(SYMBOL, 'short', maxposition)
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
+
         else:
 
             entry_price = position[5]  # enter price
@@ -393,7 +391,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
                 else:
                     temp_arr = copy.copy(proffit_array)
-                    for j in range(0, len(temp_arr)):
+                    for j in range(0, len(temp_arr) - 1):
                         delta = temp_arr[j][0]
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):

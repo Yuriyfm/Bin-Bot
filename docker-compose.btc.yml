@@ -8,7 +8,7 @@ services:
     container_name: btc_bot
     build:
       context: .
-      dockerfile: Dockerfile.btc
+      dockerfile: Dockerfile.ltc
     restart: always
     env_file:
       - ./.env

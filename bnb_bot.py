@@ -17,10 +17,10 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'BTCUSDT'
+SYMBOL = 'BNBUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 22
-POS_IN_CHANNEL = 0.4
+SLOPE = 18
+POS_IN_CHANNEL = 0.6
 
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
@@ -39,20 +39,19 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.6) / current_price, 3)
+maxposition = round((balance * 0.3) / current_price, 2)
 stop_percent = 0.006
-# 0,3% - 20, 0,5% - 30, 0,7% - 20, 0,9% - 10, 1,1% - 10, 1,3% - 10
-eth_proffit_array = [[round(current_price * 0.0015), 2], [round(current_price * 0.003), 3],
-                     [round(current_price * 0.0045), 2],
-                     [round(current_price * 0.006), 1], [round(current_price * 0.0075), 1],
-                     [round(current_price * 0.009), 1]]
+
+eth_proffit_array = [[round(current_price * 0.0015, 1), 2], [round(current_price * 0.003, 1), 3],
+                     [round(current_price * 0.0045, 1), 3],
+                     [round(current_price * 0.006, 1), 1], [round(current_price * 0.0075, 1), 1]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 
 
-# функция запрашивает с площадки последние 500 свечей за пять минут и возвращает датафрейм с нужными столбцами
+# функция запрашивает с площадки последние 500 свечей по пять минут и возвращает датафрейм с нужными столбцами
 
 def get_futures_klines(symbol, limit=500):
     try:
@@ -358,12 +357,11 @@ def main(step):
         position = get_opened_positions(SYMBOL)
         open_sl = position[0]
         if open_sl == "":  # no position
-            if step % 20 == 0 or step == 1:
+            if step % 20 == 0:
                 prt('Нет открытых позиций')
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL)
-            signal = 'long'
             proffit_array = copy.copy(eth_proffit_array)
 
             if signal == 'long':
@@ -379,7 +377,7 @@ def main(step):
             entry_price = position[5]  # enter price
             current_price = get_symbol_price(SYMBOL)
             quantity = position[1]
-            if step % 20 == 0 or step == 1:
+            if step % 20 == 0:
                 prt('Есть открытая позиция ' + open_sl)
                 prt(f'Кол-во: {str(quantity)}\nВход: {entry_price}\nТекущий прайс: {current_price}')
 
@@ -434,7 +432,7 @@ counterr = 1
 
 while time.time() <= timeout:
     try:
-        if counterr % 20 == 0 or counterr == 1:
+        if counterr % 20 == 0:
             prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counterr)
         counterr = counterr + 1
