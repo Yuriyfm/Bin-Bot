@@ -19,9 +19,11 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 18
-POS_IN_CHANNEL = 0.6
+SLOPE = 21
+POS_IN_CHANNEL = 0.4
 STEP_PRICE = None
+FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
+
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -44,7 +46,7 @@ stop_percent = 0.006
 
 eth_proffit_array = [[round(current_price * 0.003, 3), 2], [round(current_price * 0.005, 3), 3],
                      [round(current_price * 0.007, 3), 3],
-                     [round(current_price * 0.009, 3), 1], [round(current_price * 0.011, 3), 1]]
+                     [round(current_price * 0.009, 3), 2]]
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -352,14 +354,18 @@ def prt(message):
 def main(step):
     global proffit_array
     global STEP_PRICE
-
+    global FULL_STAT
+    if step % 60 == 0:
+        prt(f'Время старта: {time.ctime(FULL_STAT["start_time"])},'
+            f'Положительных: {FULL_STAT["positive"]},'
+            f'Отрицательных: {FULL_STAT["negative"]},'
+            f'Баланс в USD: {FULL_STAT["profit_usd"]},'
+            f'Баланс в %: {FULL_STAT["profit_percent"]}')
     try:
         getTPSLfrom_telegram()
         position = get_opened_positions(SYMBOL)
         open_sl = position[0]
         if open_sl == "":  # no position
-            if step % 20 == 0:
-                prt('Нет открытых позиций')
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL)
@@ -378,16 +384,15 @@ def main(step):
             entry_price = position[5]  # enter price
             current_price = get_symbol_price(SYMBOL)
             quantity = position[1]
-            if step % 20 == 0:
-                prt('Есть открытая позиция ' + open_sl)
-                prt(f'Кол-во: {str(quantity)}\nВход: {entry_price}\nТекущий прайс: {current_price}')
-
             if open_sl == 'long':
                 stop_price = entry_price * (1 - stop_percent) if STEP_PRICE == None else STEP_PRICE * (1 - stop_percent)
                 if current_price < stop_price:
                     # stop loss
                     prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
                         f'Минус USD: {quantity * current_price * (1 - current_price / entry_price)}\nМинус %: {(1 - current_price / entry_price) * 100}')
+                    FULL_STAT['negative'] += 1
+                    FULL_STAT['profit_usd'] -= quantity * current_price * (1 - current_price / entry_price)
+                    FULL_STAT['profit_percent'] -= (1 - current_price / entry_price) * 100
                     close_position(SYMBOL, 'long', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
                     STEP_PRICE = None
@@ -402,6 +407,9 @@ def main(step):
                                 f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\n'
                                 f'Плюс %: {(abs(1 - current_price / entry_price)) * 100 * (contracts / 10)}')
                             close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
+                            FULL_STAT['positive'] += 1
+                            FULL_STAT['profit_usd'] += quantity * current_price * (1 - current_price / entry_price)
+                            FULL_STAT['profit_percent'] += (1 - current_price / entry_price) * 100
                             STEP_PRICE = current_price
                             del proffit_array[0]
 
@@ -412,6 +420,9 @@ def main(step):
                     prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
                         f'Минус USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\nМинус %: {(abs(1 - current_price / entry_price)) * 100}')
                     close_position(SYMBOL, 'short', abs(quantity))
+                    FULL_STAT['negative'] += 1
+                    FULL_STAT['profit_usd'] += quantity * current_price * (1 - current_price / entry_price)
+                    FULL_STAT['profit_percent'] += (1 - current_price / entry_price) * 100
                     proffit_array = copy.copy(eth_proffit_array)
                     STEP_PRICE = None
                 else:
@@ -425,6 +436,9 @@ def main(step):
                                 f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\n'
                                 f'Плюс %: {(abs(1 - current_price / entry_price)) * 100 * (contracts / 10)}')
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
+                            FULL_STAT['positive'] += 1
+                            FULL_STAT['profit_usd'] -= quantity * current_price * (abs(1 - current_price / entry_price))
+                            FULL_STAT['profit_percent'] -= 1 - (current_price / entry_price) * 100 * (contracts / 10)
                             STEP_PRICE = current_price
                             del proffit_array[0]
     except Exception as e:
@@ -437,11 +451,11 @@ counterr = 1
 
 while time.time() <= timeout:
     try:
-        if counterr % 20 == 0:
-            prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+        # if counterr % 20 == 0:
+        #     prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counterr)
         counterr = counterr + 1
-        if counterr > 20:
+        if counterr > 60:
             counterr = 1
         time.sleep(30 - ((time.time() - starttime) % 30.0))  # запрос к площадке 2 раза в минуту
     except KeyboardInterrupt:
