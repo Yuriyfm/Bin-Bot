@@ -390,6 +390,7 @@ def main(step):
                         f'Минус USD: {quantity * current_price * (1 - current_price / entry_price)}\nМинус %: {(1 - current_price / entry_price) * 100}')
                     close_position(SYMBOL, 'long', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
+                    STEP_PRICE = None
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
@@ -412,6 +413,7 @@ def main(step):
                         f'Минус USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\nМинус %: {(abs(1 - current_price / entry_price)) * 100}')
                     close_position(SYMBOL, 'short', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
+                    STEP_PRICE = None
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
