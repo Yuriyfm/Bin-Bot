@@ -19,8 +19,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'BNBUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 21
-POS_IN_CHANNEL = 0.4
+SLOPE = 18
+POS_IN_CHANNEL = 0.7
 STEP_PRICE = None
 FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
 

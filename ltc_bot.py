@@ -19,8 +19,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 21
-POS_IN_CHANNEL = 0.4
+SLOPE = 18
+POS_IN_CHANNEL = 0.7
 STEP_PRICE = None
 FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
 
@@ -437,7 +437,7 @@ def main(step):
                                 f'Плюс %: {(abs(1 - current_price / entry_price)) * 100 * (contracts / 10)}')
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
                             FULL_STAT['positive'] += 1
-                            FULL_STAT['profit_usd'] -= quantity * current_price * (abs(1 - current_price / entry_price))
+                            FULL_STAT['profit_usd'] -= quantity * current_price * (1 - current_price / entry_price)
                             FULL_STAT['profit_percent'] -= 1 - (current_price / entry_price) * 100 * (contracts / 10)
                             STEP_PRICE = current_price
                             del proffit_array[0]
