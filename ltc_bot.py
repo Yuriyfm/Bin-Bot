@@ -19,8 +19,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 18
-POS_IN_CHANNEL = 0.7
+SLOPE = 20
+POS_IN_CHANNEL = 0.3
 STEP_PRICE = None
 FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
 
@@ -44,9 +44,9 @@ balance = get_wallet_balance()
 maxposition = round((balance * 0.3) / current_price, 3)
 stop_percent = 0.006
 
-eth_proffit_array = [[round(current_price * 0.003, 3), 2], [round(current_price * 0.005, 3), 3],
-                     [round(current_price * 0.007, 3), 3],
-                     [round(current_price * 0.009, 3), 2]]
+eth_proffit_array = [[round(current_price * 0.003, 3), 2], [round(current_price * 0.006, 3), 3],
+                     [round(current_price * 0.009, 3), 3],
+                     [round(current_price * 0.012, 3), 2]]
 
 proffit_array = copy.copy(eth_proffit_array)
 

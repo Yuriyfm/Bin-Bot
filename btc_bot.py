@@ -17,12 +17,13 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'BNBUSDT'
+SYMBOL = 'BTCUSDT'
 client = Client(KEY, SECRET)
 SLOPE = 18
 POS_IN_CHANNEL = 0.7
 STEP_PRICE = None
 FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
+
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -40,7 +41,7 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.3) / current_price, 2)
+maxposition = round((balance * 0.1) / current_price, 1)
 stop_percent = 0.006
 
 eth_proffit_array = [[round(current_price * 0.0015, 1), 2], [round(current_price * 0.003, 1), 3],
@@ -368,6 +369,7 @@ def main(step):
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL)
+            signal = 'long'
             proffit_array = copy.copy(eth_proffit_array)
 
             if signal == 'long':
@@ -379,7 +381,6 @@ def main(step):
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
         else:
-
             entry_price = position[5]  # enter price
             current_price = get_symbol_price(SYMBOL)
             quantity = position[1]

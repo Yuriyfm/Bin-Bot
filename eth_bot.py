@@ -40,7 +40,7 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.3) / current_price, 2)
+maxposition = round((balance * 0.8) / current_price, 2)
 stop_percent = 0.006
 
 eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
