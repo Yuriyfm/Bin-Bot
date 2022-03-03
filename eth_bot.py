@@ -19,8 +19,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 18
-POS_IN_CHANNEL = 0.7
+SLOPE = 30
+POS_IN_CHANNEL = 0.3
 STEP_PRICE = None
 FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
 
@@ -290,7 +290,7 @@ def check_if_signal(symbol):
 
         if isHCC(prepared_df, i - 1) > 0:
             # found top - OPEN SHORT
-            if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL:
+            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL:
                 # close to top of channel
                 if prepared_df['slope'][i - 1] > SLOPE:
                     # found a good enter point for SHORT
