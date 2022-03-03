@@ -20,10 +20,10 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
 SLOPE = 20
-POS_IN_CHANNEL = 0.4
+POS_IN_CHANNEL = 0.3
 STEP_PRICE = None
-FULL_STAT = {'start_time': time.time(), 'positive': 0, 'negative': 0, 'profit_usd': 0, 'profit_percent': 0}
-
+STEP = 0
+REMAINDER = 1
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -41,12 +41,26 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.1) / current_price, 3)
-stop_percent = 0.006
+maxposition = round((balance * 0.2) / current_price, 3)
+stop_percent = 0.007
 
-eth_proffit_array = [[round(current_price * 0.003, 3), 2], [round(current_price * 0.006, 3), 3],
-                     [round(current_price * 0.009, 3), 3],
-                     [round(current_price * 0.012, 3), 2]]
+eth_proffit_array = [[round(current_price * 0.004, 3), 2], [round(current_price * 0.006, 3), 2],
+                     [round(current_price * 0.008, 3), 2], [round(current_price * 0.01, 3), 2],
+                     [round(current_price * 0.012, 3), 1], [round(current_price * 0.014, 3), 1]]
+
+DEAL = {
+    'type': None,
+    'steps': {
+        1: None,
+        2: None,
+        3: None,
+        4: None,
+        5: None,
+        6: None,
+    }
+}
+
+STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
 
 proffit_array = copy.copy(eth_proffit_array)
 
@@ -272,9 +286,9 @@ def PrepareDF(DF):
 # long, short или ''
 def check_if_signal(symbol):
     try:
-        ohlc = get_futures_klines(symbol, 100)
+        ohlc = get_futures_klines(symbol, 500)
         prepared_df = PrepareDF(ohlc)
-        mean_atr = prepared_df[82:97]['ATR'].mean()
+        mean_atr = prepared_df['ATR'].mean()
 
         signal = ""  # return value
 
@@ -352,13 +366,19 @@ def prt(message):
 def main(step):
     global proffit_array
     global STEP_PRICE
-    global FULL_STAT
-    if step % 60 == 0:
-        prt(f'Время старта: {time.ctime(FULL_STAT["start_time"])},'
-            f'Положительных: {FULL_STAT["positive"]},'
-            f'Отрицательных: {FULL_STAT["negative"]},'
-            f'Баланс в USD: {FULL_STAT["profit_usd"]},'
-            f'Баланс в %: {FULL_STAT["profit_percent"]}')
+    global DEAL
+    global STAT
+    global STEP
+    global REMAINDER
+
+    if step == 1:
+        prt(f'Плюсовых: {STAT["positive"]} '
+            f'\nМинусовых: {STAT["negative"]} '
+            f'\nРезультат USD: {STAT["balance"]} '
+            f'\nCделки:\n'
+            + str(STAT['deals'])
+            )
+
     try:
         getTPSLfrom_telegram()
         position = get_opened_positions(SYMBOL)
@@ -371,10 +391,12 @@ def main(step):
 
             if signal == 'long':
                 open_position(SYMBOL, 'long', maxposition)
+                DEAL['type'] = open_sl
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
             elif signal == 'short':
                 open_position(SYMBOL, 'short', maxposition)
+                DEAL['type'] = open_sl
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
         else:
@@ -386,14 +408,25 @@ def main(step):
                 stop_price = entry_price * (1 - stop_percent) if STEP_PRICE == None else STEP_PRICE * (1 - stop_percent)
                 if current_price < stop_price:
                     # stop loss
-                    prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
-                        f'Минус USD: {quantity * current_price * (1 - current_price / entry_price)}\nМинус %: {(1 - current_price / entry_price) * 100}')
-                    FULL_STAT['negative'] += 1
-                    FULL_STAT['profit_usd'] -= quantity * current_price * (1 - current_price / entry_price)
-                    FULL_STAT['profit_percent'] -= (1 - current_price / entry_price) * 100
+
                     close_position(SYMBOL, 'long', abs(quantity))
                     proffit_array = copy.copy(eth_proffit_array)
+
+                    STEP += 1
+                    profit = REMAINDER * quantity * (current_price - entry_price)
+                    if profit < 0:
+                        STAT['negative'] += 1
+                    else:
+                        STAT['positive'] += 1
+                    DEAL['steps'][STEP] = profit
+                    STAT['deals'].append(DEAL)
+                    STAT['balance'] += profit
+
                     STEP_PRICE = None
+                    STEP = 0
+                    REMAINDER = 1
+                    DEAL = {'type': None, 'steps': {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, }}
+
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
@@ -401,28 +434,41 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):
                             # take profit
-                            prt(f'Закрыл {open_sl} {contracts * 10}% от {str(quantity)} в плюс\nВход: {entry_price}\n'
-                                f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\n'
-                                f'Плюс %: {(abs(1 - current_price / entry_price)) * 100 * (contracts / 10)}')
                             close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
-                            FULL_STAT['positive'] += 1
-                            FULL_STAT['profit_usd'] += quantity * current_price * (1 - current_price / entry_price)
-                            FULL_STAT['profit_percent'] += (1 - current_price / entry_price) * 100
+
+                            profit = (contracts / 10) * quantity * (current_price - entry_price)
+                            STEP += 1
+                            REMAINDER -= (contracts / 10)
+                            DEAL['steps'][STEP] = profit
+                            STAT['positive'] += 1
+                            STAT['balance'] += profit
                             STEP_PRICE = current_price
+
                             del proffit_array[0]
 
             if open_sl == 'short':
                 stop_price = entry_price * (1 + stop_percent) if STEP_PRICE == None else STEP_PRICE * (1 + stop_percent)
                 if current_price > stop_price:
                     # stop loss
-                    prt(f'Закрыл {open_sl} {str(quantity)} в минус\nВход: {entry_price}\nЗакрытие: {current_price}'
-                        f'Минус USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\nМинус %: {(abs(1 - current_price / entry_price)) * 100}')
-                    close_position(SYMBOL, 'short', abs(quantity))
-                    FULL_STAT['negative'] += 1
-                    FULL_STAT['profit_usd'] += quantity * current_price * (1 - current_price / entry_price)
-                    FULL_STAT['profit_percent'] += (1 - current_price / entry_price) * 100
                     proffit_array = copy.copy(eth_proffit_array)
+                    close_position(SYMBOL, 'short', abs(quantity))
+                    proffit_array = copy.copy(eth_proffit_array)
+
+                    STEP += 1
+                    profit = REMAINDER * quantity * (entry_price - current_price)
+                    if profit < 0:
+                        STAT['negative'] += 1
+                    else:
+                        STAT['positive'] += 1
+                    DEAL['steps'][STEP] = profit
+                    STAT['deals'].append(DEAL)
+                    STAT['balance'] += profit
+
                     STEP_PRICE = None
+                    STEP = 0
+                    REMAINDER = 1
+                    DEAL = {'type': None, 'steps': {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, }}
+
                 else:
                     temp_arr = copy.copy(proffit_array)
                     for j in range(0, len(temp_arr) - 1):
@@ -430,14 +476,16 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price < (entry_price - delta):
                             # take profit
-                            prt(f'Закрыл {open_sl} {contracts * 10}% от {str(quantity)} в плюс\nВход: {entry_price}\n'
-                                f'Закрытие: {current_price}\nПлюс USD: {quantity * current_price * (abs(1 - current_price / entry_price))}\n'
-                                f'Плюс %: {(abs(1 - current_price / entry_price)) * 100 * (contracts / 10)}')
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
-                            FULL_STAT['positive'] += 1
-                            FULL_STAT['profit_usd'] -= quantity * current_price * (1 - current_price / entry_price)
-                            FULL_STAT['profit_percent'] -= 1 - (current_price / entry_price) * 100 * (contracts / 10)
+
+                            profit = (contracts / 10) * quantity * (current_price - entry_price)
+                            STEP += 1
+                            REMAINDER -= (contracts / 10)
+                            DEAL['steps'][STEP] = profit
+                            STAT['positive'] += 1
+                            STAT['balance'] += profit
                             STEP_PRICE = current_price
+
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')
@@ -453,7 +501,7 @@ while time.time() <= timeout:
         #     prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counterr)
         counterr = counterr + 1
-        if counterr > 60:
+        if counterr > 120:
             counterr = 1
         time.sleep(30 - ((time.time() - starttime) % 30.0))  # запрос к площадке 2 раза в минуту
     except KeyboardInterrupt:
