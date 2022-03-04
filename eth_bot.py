@@ -42,11 +42,11 @@ def get_wallet_balance():
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
 maxposition = round((balance * 0.2) / current_price, 2)
-stop_percent = 0.007
+stop_percent = 0.008
 
-eth_proffit_array = [[round(current_price * 0.003), 2], [round(current_price * 0.005), 3],
-                     [round(current_price * 0.007), 3],
-                     [round(current_price * 0.009), 2]]
+eth_proffit_array = [[round(current_price * 0.006), 2], [round(current_price * 0.0012), 3],
+                     [round(current_price * 0.018), 3],
+                     [round(current_price * 0.024), 2]]
 
 DEAL = {
     'type': None,
