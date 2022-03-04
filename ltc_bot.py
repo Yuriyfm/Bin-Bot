@@ -20,7 +20,7 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'LTCUSDT'
 client = Client(KEY, SECRET)
 SLOPE = 20
-POS_IN_CHANNEL = 0.3
+POS_IN_CHANNEL = 0.5
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -286,7 +286,7 @@ def PrepareDF(DF):
 # long, short или ''
 def check_if_signal(symbol):
     try:
-        ohlc = get_futures_klines(symbol, 500)
+        ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df['ATR'].mean()
 
