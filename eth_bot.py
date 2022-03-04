@@ -44,9 +44,9 @@ balance = get_wallet_balance()
 maxposition = round((balance * 0.2) / current_price, 2)
 stop_percent = 0.008
 
-eth_proffit_array = [[round(current_price * 0.006), 2], [round(current_price * 0.0012), 3],
-                     [round(current_price * 0.018), 3],
-                     [round(current_price * 0.024), 2]]
+eth_proffit_array = [[round(current_price * 0.006), 2], [round(current_price * 0.0010), 2],
+                     [round(current_price * 0.014), 3],
+                     [round(current_price * 0.018), 2], [round(current_price * 0.022), 1]]
 
 DEAL = {
     'type': None,
@@ -54,7 +54,8 @@ DEAL = {
         1: None,
         2: None,
         3: None,
-        4: None
+        4: None,
+        5: None
     }
 }
 
