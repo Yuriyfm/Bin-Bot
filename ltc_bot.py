@@ -288,7 +288,7 @@ def check_if_signal(symbol):
     try:
         ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
-        mean_atr = prepared_df['ATR'].mean()
+        mean_atr = prepared_df[82:97]['ATR'].mean()
 
         signal = ""  # return value
 
