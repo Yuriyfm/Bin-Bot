@@ -44,9 +44,9 @@ balance = get_wallet_balance()
 maxposition = round((balance * 0.2) / current_price, 2)
 stop_percent = 0.008
 
-eth_proffit_array = [[round(current_price * 0.006), 2], [round(current_price * 0.0012), 3],
-                     [round(current_price * 0.018), 3],
-                     [round(current_price * 0.024), 2]]
+eth_proffit_array = [[round(current_price * 0.006), 2], [round(current_price * 0.010), 2],
+                     [round(current_price * 0.014), 3],
+                     [round(current_price * 0.018), 2], [round(current_price * 0.022), 1]]
 
 DEAL = {
     'type': None,
@@ -54,7 +54,8 @@ DEAL = {
         1: None,
         2: None,
         3: None,
-        4: None
+        4: None,
+        5: None
     }
 }
 
@@ -394,12 +395,12 @@ def main(step):
 
             if signal == 'long':
                 open_position(SYMBOL, 'long', maxposition)
-                DEAL['type'] = open_sl
+                DEAL['type'] = signal
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
             elif signal == 'short':
                 open_position(SYMBOL, 'short', maxposition)
-                DEAL['type'] = open_sl
+                DEAL['type'] = signal
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
         else:
@@ -416,7 +417,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = REMAINDER * quantity * (current_price - entry_price)
+                    profit = round(REMAINDER * quantity * (current_price - entry_price), 2)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -424,7 +425,7 @@ def main(step):
                     DEAL['steps'][STEP] = profit
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
-
+                    prt(f'Завершил сделку {open_sl} на {quantity} {SYMBOL} на шаге {STEP}')
                     STEP_PRICE = None
                     STEP = 0
                     REMAINDER = 1
@@ -438,15 +439,14 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
-
-                            profit = (contracts / 10) * quantity * (current_price - entry_price)
+                            profit = round((contracts / 10) * quantity * (current_price - entry_price), 2)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL['steps'][STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-
+                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, от {quantity} {SYMBOL}, шаг {STEP}')
                             del proffit_array[0]
 
             if open_sl == 'short':
@@ -458,7 +458,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = REMAINDER * quantity * (entry_price - current_price)
+                    profit = round(REMAINDER * quantity * (entry_price - current_price), 2)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -466,7 +466,7 @@ def main(step):
                     DEAL['steps'][STEP] = profit
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
-
+                    prt(f'Завершил сделку {open_sl} на {quantity} {SYMBOL} на шаге {STEP}')
                     STEP_PRICE = None
                     STEP = 0
                     REMAINDER = 1
@@ -481,14 +481,14 @@ def main(step):
                             # take profit
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
 
-                            profit = (contracts / 10) * quantity * (current_price - entry_price)
+                            profit = round((contracts / 10) * quantity * (current_price - entry_price))
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL['steps'][STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-
+                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, от {quantity} {SYMBOL}, шаг {STEP}')
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')
