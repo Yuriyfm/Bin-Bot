@@ -3,7 +3,7 @@ version: '3.7'
 
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
-  bch_bot:
+  bchbot:
     image: bchbot_image
     container_name: bch_bot
     build:
