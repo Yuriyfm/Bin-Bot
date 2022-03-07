@@ -4,7 +4,7 @@ version: '3.7'
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
   origin_bot:
-    image: ltcbot_image
+    image: bchbot_image
     container_name: ltc_bot
     build:
       context: .

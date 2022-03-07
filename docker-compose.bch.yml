@@ -4,11 +4,11 @@ version: '3.7'
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
   modify_bot:
-    image: bnbbot_image
-    container_name: bnb_bot
+    image: bchbot_image
+    container_name: bch_bot
     build:
       context: .
-      dockerfile: Dockerfile.bnb
+      dockerfile: Dockerfile.bch
     restart: always
     env_file:
       - ./.env

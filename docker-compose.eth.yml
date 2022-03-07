@@ -4,7 +4,7 @@ version: '3.7'
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
   modify_bot:
-    image: ethbot_image
+    image: bchbot_image
     container_name: eth_bot
     build:
       context: .
