@@ -403,7 +403,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = round(REMAINDER * quantity * (current_price - entry_price), 2)
+                    profit = round(abs(quantity) * (current_price - entry_price), 2)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -411,7 +411,7 @@ def main(step):
                     DEAL[STEP] = profit
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
-                    prt(f'Завершил сделку {open_sl} {quantity} {SYMBOL}, остаток {REMAINDER * 10}% на шаге {STEP}')
+                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
                     STEP_PRICE = None
                     STEP = 0
                     REMAINDER = 1
@@ -425,14 +425,14 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
-                            profit = round((contracts / 10) * quantity * (current_price - entry_price), 2)
+                            profit = round((maxposition - abs(quantity)) * (current_price - entry_price), 2)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {quantity} {SYMBOL}, {REMAINDER * 10}%, шаг {STEP}')
+                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {abs(quantity)} {SYMBOL}, {round(REMAINDER * 100)}%, шаг {STEP}')
                             del proffit_array[0]
 
             if open_sl == 'short':
@@ -444,7 +444,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = round(REMAINDER * quantity * (current_price - entry_price), 2)
+                    profit = round(abs(quantity) * (entry_price - current_price), 2)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -452,7 +452,7 @@ def main(step):
                     DEAL[STEP] = profit
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
-                    prt(f'Завершил сделку {open_sl} на {quantity} {SYMBOL} на шаге {STEP}')
+                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
                     STEP_PRICE = None
                     STEP = 0
                     REMAINDER = 1
@@ -466,15 +466,14 @@ def main(step):
                         if current_price < (entry_price - delta):
                             # take profit
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
-
-                            profit = round((contracts / 10) * quantity * (current_price - entry_price))
+                            profit = round((abs(maxposition) - abs(quantity)) * (entry_price - current_price), 2)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {quantity} {SYMBOL}, {REMAINDER * 10}%, шаг {STEP}')
+                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {abs(quantity)} {SYMBOL}, {round(REMAINDER * 100)}%, шаг {STEP}')
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')
