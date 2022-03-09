@@ -46,7 +46,7 @@ stop_percent = 0.008
 
 eth_proffit_array = [[round(current_price * 0.006, 3), 2], [round(current_price * 0.009, 3), 2],
                      [round(current_price * 0.012, 3), 2], [round(current_price * 0.015, 3), 2],
-                     [round(current_price * 0.018, 3), 1], [round(current_price * 0.021, 3), 1]]
+                     [round(current_price * 0.018, 3), 1], [round(current_price * 0.021, 3), 1], [round(current_price * 0.021, 3), 0]]
 
 DEAL = {}
 
