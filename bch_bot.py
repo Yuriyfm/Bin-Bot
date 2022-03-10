@@ -382,6 +382,7 @@ def main(step):
             if signal == 'long':
                 open_position(SYMBOL, 'long', maxposition)
                 DEAL['type'] = signal
+                DEAL['start_time'] = time.time()
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
 
             elif signal == 'short':
