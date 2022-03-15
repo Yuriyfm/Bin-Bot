@@ -284,7 +284,7 @@ def check_if_signal(symbol):
         signal = ""  # return value
 
         i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
-        prt(prepared_df['slope'][98 - 1])
+        prt(f"{prepared_df['slope'][98 - 1]}")
         if isLCC(prepared_df, i - 1) > 0:
             # found bottom - OPEN LONG
             if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.8:
