@@ -4,6 +4,7 @@ import pandas as pd
 import statsmodels.api as sm
 import copy
 import time
+import datetime
 import random
 from dotenv import load_dotenv
 from pathlib import Path
@@ -276,7 +277,6 @@ def PrepareDF(DF):
 # long, short или ''
 def check_if_signal(symbol):
     try:
-
         ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df[82:97]['ATR'].mean()
@@ -284,7 +284,7 @@ def check_if_signal(symbol):
         signal = ""  # return value
 
         i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
-        prt(f"{prepared_df['slope'][98 - 1]}")
+
         if isLCC(prepared_df, i - 1) > 0:
             # found bottom - OPEN LONG
             if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.8:
@@ -293,7 +293,7 @@ def check_if_signal(symbol):
 
         if isHCC(prepared_df, i - 1) > 0:
             # found top - OPEN SHORT
-            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] < SLOPE and mean_atr < 0.8:
+            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 0.8:
                 # found a good enter point for SHORT
                 signal = 'short'
 
@@ -381,15 +381,26 @@ def main(step):
             proffit_array = copy.copy(eth_proffit_array)
 
             if signal == 'long':
+                now = datetime.datetime.now()
                 open_position(SYMBOL, 'long', maxposition)
                 DEAL['type'] = signal
-                DEAL['start_time'] = time.time()
+                DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
+                STEP_PRICE = None
+                STEP = 0
+                REMAINDER = 1
+                DEAL = {}
 
             elif signal == 'short':
+                now = datetime.datetime.now()
                 open_position(SYMBOL, 'short', maxposition)
                 DEAL['type'] = signal
+                DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
+                STEP_PRICE = None
+                STEP = 0
+                REMAINDER = 1
+                DEAL = {}
 
         else:
 
@@ -405,7 +416,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = round(abs(quantity) * (current_price - entry_price), 2)
+                    profit = round(abs(quantity) * (current_price - entry_price), 3)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -414,10 +425,6 @@ def main(step):
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
-                    STEP_PRICE = None
-                    STEP = 0
-                    REMAINDER = 1
-                    DEAL = {}
 
                 else:
                     temp_arr = copy.copy(proffit_array)
@@ -426,8 +433,8 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):
                             # take profit
-                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 2)))
-                            profit = round((maxposition - abs(quantity)) * (current_price - entry_price), 2)
+                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
+                            profit = round((maxposition - abs(quantity)) * (current_price - entry_price), 3)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
@@ -446,7 +453,7 @@ def main(step):
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = round(abs(quantity) * (entry_price - current_price), 2)
+                    profit = round(abs(quantity) * (entry_price - current_price), 3)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -455,10 +462,6 @@ def main(step):
                     STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
-                    STEP_PRICE = None
-                    STEP = 0
-                    REMAINDER = 1
-                    DEAL = {}
 
                 else:
                     temp_arr = copy.copy(proffit_array)
@@ -467,8 +470,8 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price < (entry_price - delta):
                             # take profit
-                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 2)))
-                            profit = round((abs(maxposition) - abs(quantity)) * (entry_price - current_price), 2)
+                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
+                            profit = round((abs(maxposition) - abs(quantity)) * (entry_price - current_price), 3)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
