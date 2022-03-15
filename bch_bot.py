@@ -425,7 +425,7 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):
                             # take profit
-                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
+                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 2)))
                             profit = round((maxposition - abs(quantity)) * (current_price - entry_price), 2)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
@@ -466,7 +466,7 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price < (entry_price - delta):
                             # take profit
-                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
+                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 2)))
                             profit = round((abs(maxposition) - abs(quantity)) * (entry_price - current_price), 2)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
