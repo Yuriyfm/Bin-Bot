@@ -386,6 +386,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
+                STAT['deals'].append(DEAL)
                 STEP_PRICE = None
                 STEP = 0
                 REMAINDER = 1
@@ -397,6 +398,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
+                STAT['deals'].append(DEAL)
                 STEP_PRICE = None
                 STEP = 0
                 REMAINDER = 1
@@ -422,7 +424,6 @@ def main(step):
                     else:
                         STAT['positive'] += 1
                     DEAL[STEP] = profit
-                    STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
 
@@ -459,7 +460,6 @@ def main(step):
                     else:
                         STAT['positive'] += 1
                     DEAL[STEP] = profit
-                    STAT['deals'].append(DEAL)
                     STAT['balance'] += profit
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}')
 
