@@ -20,8 +20,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'BCHUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 25
-POS_IN_CHANNEL = 0.4
+SLOPE = 30
+POS_IN_CHANNEL = 0.2
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -43,11 +43,11 @@ def get_wallet_balance():
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
 maxposition = round((balance * 0.3) / current_price, 3)
-stop_percent = 0.008
+stop_percent = 0.01
 
-eth_proffit_array = [[round(current_price * 0.006, 3), 2], [round(current_price * 0.009, 3), 2],
-                     [round(current_price * 0.012, 3), 2], [round(current_price * 0.015, 3), 2],
-                     [round(current_price * 0.018, 3), 1], [round(current_price * 0.021, 3), 1], [round(current_price * 0.021, 3), 0]]
+eth_proffit_array = [[round(current_price * 0.01, 3), 2], [round(current_price * 0.014, 3), 2],
+                     [round(current_price * 0.018, 3), 2], [round(current_price * 0.022, 3), 2],
+                     [round(current_price * 0.026, 3), 1], [round(current_price * 0.03, 3), 1], [round(current_price * 0.03, 3), 0]]
 
 DEAL = {}
 
