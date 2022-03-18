@@ -279,7 +279,7 @@ def check_if_signal(symbol):
     try:
         ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
-        mean_atr = prepared_df[82:97]['ATR'].mean()
+        mean_atr = prepared_df[80:95]['ATR'].mean()
 
         signal = ""  # return value
 
@@ -287,13 +287,13 @@ def check_if_signal(symbol):
 
         if isLCC(prepared_df, i - 1) > 0:
             # found bottom - OPEN LONG
-            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.33:
+            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.25:
                 # found a good enter point for LONG
                 signal = 'long'
 
         if isHCC(prepared_df, i - 1) > 0:
             # found top - OPEN SHORT
-            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 0.33:
+            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 0.25:
                 # found a good enter point for SHORT
                 signal = 'short'
 
@@ -435,7 +435,7 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
-                            profit = round((maxposition - abs(quantity)) * (current_price - entry_price), 3)
+                            profit = round((maxposition * (contracts / 10)) * (current_price - entry_price), 3)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
@@ -471,7 +471,7 @@ def main(step):
                         if current_price < (entry_price - delta):
                             # take profit
                             close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
-                            profit = round((abs(maxposition) - abs(quantity)) * (entry_price - current_price), 3)
+                            profit = round((maxposition * (contracts / 10)) * (entry_price - current_price), 3)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
