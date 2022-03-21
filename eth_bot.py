@@ -20,8 +20,8 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
-SLOPE = 30
-POS_IN_CHANNEL = 0.2
+SLOPE = 25
+POS_IN_CHANNEL = 0.35
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -281,18 +281,18 @@ def check_if_signal(symbol):
         ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df[80:95]['ATR'].mean()
-
+        delta_100 = prepared_df['close'][99] - prepared_df['close'][0]
         signal = ""  # return value
 
         i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-        if isLCC(prepared_df, i - 1) > 0:
+        if isLCC(prepared_df, i - 1) > 0 and prepared_df['close'][0] * -0.02 <= delta_100:
             # found bottom - OPEN LONG
             if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 6:
                 # found a good enter point for LONG
                 signal = 'long'
 
-        if isHCC(prepared_df, i - 1) > 0:
+        if isHCC(prepared_df, i - 1) > 0 and delta_100 <= prepared_df['close'][0] * 0.02:
             # found top - OPEN SHORT
             if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 6:
                 # found a good enter point for SHORT
