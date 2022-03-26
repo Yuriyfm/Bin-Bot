@@ -18,14 +18,13 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'BCHUSDT'
+SYMBOL = 'ETCUSDT'
 client = Client(KEY, SECRET)
 SLOPE = 25
 POS_IN_CHANNEL = 0.35
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
-
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -288,19 +287,20 @@ def check_if_signal(symbol):
 
         if isLCC(prepared_df, i - 1) > 0 and prepared_df['close'][69] * -0.007 <= delta_30:
             # found bottom - OPEN LONG
-            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 1:
+            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.3:
                 # found a good enter point for LONG
                 signal = 'long'
 
         if isHCC(prepared_df, i - 1) > 0 and delta_30 <= prepared_df['close'][69] * 0.007:
             # found top - OPEN SHORT
-            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 1:
+            if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 0.3:
                 # found a good enter point for SHORT
                 signal = 'short'
 
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}')
+
 
 telegram_delay = 12
 bot_token = os.getenv("TELEGRAM_TOKEN")

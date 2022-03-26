@@ -18,7 +18,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = 'BNBUSDT'
 client = Client(KEY, SECRET)
 
 
@@ -37,6 +37,26 @@ def get_futures_klines(symbol, limit=500):
         return df
     except Exception as e:
         print(f'Ошибка при получении истории последних свечей: \n{e}')
+
+
+def get_opened_positions(symbol):
+    try:
+        status = client.futures_account()
+        positions = pd.DataFrame(status['positions'])
+        a = positions[positions['symbol'] == symbol]['positionAmt'].astype(float).tolist()[0]
+        leverage = int(positions[positions['symbol'] == symbol]['leverage'])
+        entryprice = positions[positions['symbol'] == symbol]['entryPrice']
+        profit = float(status['totalUnrealizedProfit'])
+        balance = round(float(status['totalWalletBalance']), 2)
+        if a > 0:
+            pos = "long"
+        elif a < 0:
+            pos = "short"
+        else:
+            pos = ""
+        return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
+    except Exception as e:
+        print(f'Ошибка при получении данных по открытой позиции: \n{e}')
 
 
 def indSlope(series, n):
@@ -84,3 +104,4 @@ ohlc = get_futures_klines(SYMBOL, 1000)
 prepared_df = PrepareDF(ohlc)
 mean_atr = prepared_df['ATR'].mean()
 print(mean_atr)
+# get_opened_positions(SYMBOL)
