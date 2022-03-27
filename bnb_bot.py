@@ -25,6 +25,7 @@ POS_IN_CHANNEL = 0.35
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
+ROUND = 2
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
@@ -42,12 +43,12 @@ def get_wallet_balance():
 
 current_price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-maxposition = round((balance * 0.3) / current_price, 3)
+maxposition = round((balance * 0.3) / current_price, 2)
 stop_percent = 0.008
 
 eth_proffit_array = [[round(current_price * 0.006, 3), 2], [round(current_price * 0.008, 3), 2],
                      [round(current_price * 0.012, 3), 2], [round(current_price * 0.014, 3), 2],
-                     [round(current_price * 0.018, 3), 1], [round(current_price * 0.022, 3), 1], [round(current_price * 0.03, 3), 0]]
+                     [round(current_price * 0.018, 3), 1], [round(current_price * 0.022, 3), 1]]
 
 DEAL = {}
 
@@ -281,6 +282,7 @@ def check_if_signal(symbol):
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df[80:95]['ATR'].mean()
         delta_30 = prepared_df['close'][99] - prepared_df['close'][69]
+        delta_100 = prepared_df['close'][99] - prepared_df['close'][0]
         signal = ""  # return value
 
         i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
@@ -382,7 +384,7 @@ def main(step):
 
             if signal == 'long':
                 now = datetime.datetime.now()
-                open_position(SYMBOL, 'long', maxposition)
+                open_position(SYMBOL, signal, round(maxposition, ROUND))
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
@@ -394,7 +396,7 @@ def main(step):
 
             elif signal == 'short':
                 now = datetime.datetime.now()
-                open_position(SYMBOL, 'short', maxposition)
+                open_position(SYMBOL, signal, round(maxposition, ROUND))
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {maxposition} {SYMBOL}')
@@ -414,11 +416,11 @@ def main(step):
                 if current_price < stop_price:
                     # stop loss
 
-                    close_position(SYMBOL, 'long', abs(quantity))
+                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND))
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
-                    profit = round(abs(quantity) * (current_price - entry_price), 3)
+                    profit = round(abs(quantity) * (current_price - entry_price), ROUND)
                     if profit < 0:
                         STAT['negative'] += 1
                     else:
@@ -434,15 +436,18 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):
                             # take profit
-                            close_position(SYMBOL, 'long', abs(round(maxposition * (contracts / 10), 3)))
-                            profit = round((maxposition * (contracts / 10)) * (current_price - entry_price), 3)
+                            if len(proffit_array) > 1:
+                                close_position(SYMBOL, open_sl, abs(round(maxposition * (contracts / 10), ROUND)))
+                            else:
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND))
+                            profit = round((maxposition * (contracts / 10)) * (current_price - entry_price), ROUND)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {abs(quantity)} {SYMBOL}, {round(REMAINDER * 100)}%, шаг {STEP}')
+                            prt(f'Закрыл {100 - round(REMAINDER)}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
 
             if open_sl == 'short':
@@ -450,7 +455,7 @@ def main(step):
                 if current_price > stop_price:
                     # stop loss
                     proffit_array = copy.copy(eth_proffit_array)
-                    close_position(SYMBOL, 'short', abs(quantity))
+                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND))
                     proffit_array = copy.copy(eth_proffit_array)
 
                     STEP += 1
@@ -470,15 +475,18 @@ def main(step):
                         contracts = temp_arr[j][1]
                         if current_price < (entry_price - delta):
                             # take profit
-                            close_position(SYMBOL, 'short', abs(round(maxposition * (contracts / 10), 3)))
-                            profit = round((maxposition * (contracts / 10)) * (entry_price - current_price), 3)
+                            if len(proffit_array) > 1:
+                                close_position(SYMBOL, open_sl, abs(round(maxposition * (contracts / 10), ROUND)))
+                            else:
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND))
+                            profit = round((maxposition * (contracts / 10)) * (entry_price - current_price), ROUND)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
                             DEAL[STEP] = profit
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {contracts / 10} сделки  {open_sl}, остаток {abs(quantity)} {SYMBOL}, {round(REMAINDER * 100)}%, шаг {STEP}')
+                            prt(f'Закрыл {100 - round(REMAINDER)}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')

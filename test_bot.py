@@ -18,8 +18,26 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'BNBUSDT'
+SYMBOL = 'ETCUSDT'
 client = Client(KEY, SECRET)
+
+
+def get_symbol_price(symbol):
+    prices = client.get_all_tickers()
+    df = pd.DataFrame(prices)
+    return float(df[df['symbol'] == symbol]['price'])
+
+
+def get_wallet_balance():
+    status = client.futures_account()
+    balance = round(float(status['totalWalletBalance']), 2)
+    return balance
+
+
+current_price = get_symbol_price(SYMBOL)
+balance = get_wallet_balance()
+maxposition = round((balance * 0.1) / current_price, 2)
+stop_percent = 0.008
 
 
 def get_futures_klines(symbol, limit=500):
@@ -100,8 +118,90 @@ def PrepareDF(DF):
     df = df.reset_index()
     return df
 
-ohlc = get_futures_klines(SYMBOL, 1000)
+
+def open_position(symbol, s_l, quantity_l):
+    try:
+        sprice = get_symbol_price(symbol)
+
+        if s_l == 'long':
+            close_price = str(round(sprice * (1 + stop_percent), 2))
+            params = {
+                "batchOrders": [
+                    {
+                        "symbol": symbol,
+                        "side": "BUY",
+                        "type": "LIMIT",
+                        "quantity": str(quantity_l),
+                        "timeInForce": "GTC",
+                        "price": close_price
+
+                    }
+                ]
+            }
+            response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+            print(response)
+
+        if s_l == 'short':
+            close_price = str(round(sprice * (1 - stop_percent), 2))
+            params = {
+                "batchOrders": [
+                    {
+                        "symbol": symbol,
+                        "side": "SELL",
+                        "type": "LIMIT",
+                        "quantity": str(quantity_l),
+                        "timeInForce": "GTC",
+                        "price": close_price
+                    }
+                ]
+            }
+            response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
+            print(response)
+    except Exception as e:
+        print(f'Ошибка открытия позиции: \n{e}')
+
+
+# функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
+# собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
+# https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
+
+def close_position(symbol, s_l, quantity_l):
+    try:
+        sprice = get_symbol_price(symbol)
+
+        if s_l == 'long':
+            close_price = str(round(sprice * (1 - stop_percent), 2))
+            params = {
+                "symbol": symbol,
+                "side": "SELL",
+                "type": "LIMIT",
+                "quantity": str(quantity_l),
+                "timeInForce": "GTC",
+                "price": close_price
+            }
+            response = send_signed_request('POST', '/fapi/v1/order', params)
+            print(response)
+
+        if s_l == 'short':
+            close_price = str(round(sprice * (1 + stop_percent), 2))
+            params = {
+
+                "symbol": symbol,
+                "side": "BUY",
+                "type": "LIMIT",
+                "quantity": str(quantity_l),
+                "timeInForce": "GTC",
+                "price": close_price
+            }
+            response = send_signed_request('POST', '/fapi/v1/order', params)
+            print(response)
+    except Exception as e:
+        print(f'Ошибка закрытия позиции: \n{e}')
+
+
+ohlc = get_futures_klines(SYMBOL, 100)
 prepared_df = PrepareDF(ohlc)
 mean_atr = prepared_df['ATR'].mean()
-print(mean_atr)
-# get_opened_positions(SYMBOL)
+res_open = open_position(SYMBOL, 'long', maxposition)
+res_close = close_position(SYMBOL, 'long', maxposition)
+print(res_close)

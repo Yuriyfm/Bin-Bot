@@ -1,13 +1,13 @@
 FROM python:3.7-slim
 
-RUN mkdir /binbot
+RUN mkdir /bchbot
 
-COPY requirements.txt /binbot
+COPY requirements.txt /bchbot
 
 RUN pip3 install -r /binbot/requirements.txt --no-cache-dir
 
-COPY . /binbot
+COPY . /bchbot
 
-WORKDIR /binbot
+WORKDIR /bchbot
 
 CMD [ "python", "./bch_bot.py" ]
