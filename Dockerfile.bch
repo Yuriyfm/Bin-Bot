@@ -4,7 +4,7 @@ RUN mkdir /bchbot
 
 COPY requirements.txt /bchbot
 
-RUN pip3 install -r /binbot/requirements.txt --no-cache-dir
+RUN pip3 install -r /bchbot/requirements.txt --no-cache-dir
 
 COPY . /bchbot
 

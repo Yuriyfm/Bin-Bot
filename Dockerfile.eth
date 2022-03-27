@@ -1,13 +1,13 @@
 FROM python:3.7-slim
 
-RUN mkdir /binbot
+RUN mkdir /ethbot
 
-COPY requirements.txt /binbot
+COPY requirements.txt /ethbot
 
-RUN pip3 install -r /binbot/requirements.txt --no-cache-dir
+RUN pip3 install -r /ethbot/requirements.txt --no-cache-dir
 
-COPY . /binbot
+COPY . /ethbot
 
-WORKDIR /binbot
+WORKDIR /ethbot
 
 CMD [ "python", "./eth_bot.py" ]
