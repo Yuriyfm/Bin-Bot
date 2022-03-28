@@ -446,7 +446,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {100 - round(REMAINDER)}% сделки {open_sl}, шаг {STEP}')
+                            prt(f'Закрыл {(1 - REMAINDER) * 10}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
 
             if open_sl == 'short':
@@ -485,7 +485,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {100 - round(REMAINDER)}% сделки {open_sl}, шаг {STEP}')
+                            prt(f'Закрыл {(1 - REMAINDER) * 10}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')
