@@ -281,18 +281,18 @@ def check_if_signal(symbol):
         ohlc = get_futures_klines(symbol, 100)
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df[80:95]['ATR'].mean()
-        delta_30 = prepared_df['close'][69] - prepared_df['close'][99]
+        delta_100 = prepared_df['close'][0] - prepared_df['close'][99]
         signal = ""  # return value
 
         i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-        if isLCC(prepared_df, i - 1) > 0 and prepared_df['close'][69] * 0.007 >= delta_30:
+        if isLCC(prepared_df, i - 1) > 0 and prepared_df['close'][0] * 0.02 >= delta_100:
             # found bottom - OPEN LONG
             if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL and prepared_df['slope'][i - 1] < -SLOPE and mean_atr < 0.3:
                 # found a good enter point for LONG
                 signal = 'long'
 
-        if isHCC(prepared_df, i - 1) > 0 and delta_30 >= prepared_df['close'][69] * -0.007:
+        if isHCC(prepared_df, i - 1) > 0 and delta_100 >= prepared_df['close'][0] * -0.02:
             # found top - OPEN SHORT
             if prepared_df['position_in_channel'][i - 1] > 1 - POS_IN_CHANNEL and prepared_df['slope'][i - 1] > SLOPE and mean_atr < 0.3:
                 # found a good enter point for SHORT
@@ -446,7 +446,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {(1 - REMAINDER) * 10}% сделки {open_sl}, шаг {STEP}')
+                            prt(f'Закрыл {abs(1 - REMAINDER) * 100}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
 
             if open_sl == 'short':
@@ -485,7 +485,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {(1 - REMAINDER) * 10}% сделки {open_sl}, шаг {STEP}')
+                            prt(f'Закрыл {abs(1 - REMAINDER) * 100}% сделки {open_sl}, шаг {STEP}')
                             del proffit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}')
