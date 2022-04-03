@@ -119,7 +119,7 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), ROUND)), stop_percent, ROUND, pointer)
                             else:
                                 close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (current_price - entry_price), ROUND)
@@ -159,7 +159,7 @@ def main(step):
                         if current_price < (entry_price - delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), ROUND)), stop_percent, ROUND, pointer)
                             else:
                                 close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (entry_price - current_price), ROUND)

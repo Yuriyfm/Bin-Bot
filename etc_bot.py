@@ -17,14 +17,14 @@ KLINES = 70
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
-ROUND = 2
+ROUND = 3
 stop_percent = 0.008
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-max_position = round((balance * 0.3) / price, 3)
+max_position = round((balance * 0.1) / price, 3)
 
 
 eth_profit_array = [[round(price * 0.008, 3), 2], [round(price * 0.012, 3), 3],
@@ -119,7 +119,7 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), ROUND)), stop_percent, ROUND, pointer)
                             else:
                                 close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (current_price - entry_price), ROUND)
@@ -159,7 +159,7 @@ def main(step):
                         if current_price < (entry_price - delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), ROUND)), stop_percent, ROUND, pointer)
                             else:
                                 close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (entry_price - current_price), ROUND)
