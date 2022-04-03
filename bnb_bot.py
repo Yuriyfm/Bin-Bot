@@ -24,7 +24,7 @@ ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-max_position = round((balance * 0.1) / price, 3)
+max_position = round((balance * 0.3) / price, 3)
 
 
 eth_profit_array = [[round(price * 0.008, 3), 2], [round(price * 0.012, 3), 3],
