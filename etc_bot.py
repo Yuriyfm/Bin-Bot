@@ -19,7 +19,8 @@ STEP = 0
 REMAINDER = 1
 ROUND = 2
 stop_percent = 0.008
-ATR = indATR(get_futures_klines(SYMBOL, 500), 14)['ATR'].mean()
+pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
+ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
@@ -35,7 +36,7 @@ STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals
 
 profit_array = copy.copy(eth_profit_array)
 
-pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
+
 
 
 def main(step):
@@ -54,18 +55,18 @@ def main(step):
             + str(STAT['deals']), pointer)
 
     try:
-        getTPSLfrom_telegram(SYMBOL)
-        position = get_opened_positions(SYMBOL)
+        getTPSLfrom_telegram(SYMBOL, stop_percent, ROUND, pointer)
+        position = get_opened_positions(SYMBOL, pointer)
         open_sl = position[0]
         if open_sl == "":  # no position
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
-            signal = check_if_signal(SYMBOL, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, KLINES, ATR)
+            signal = check_if_signal(SYMBOL, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, KLINES, ATR, pointer)
             profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
                 now = datetime.datetime.now()
-                open_position(SYMBOL, signal, max_position, stop_percent)
+                open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}', pointer)
@@ -77,7 +78,7 @@ def main(step):
 
             elif signal == 'short':
                 now = datetime.datetime.now()
-                open_position(SYMBOL, signal, max_position, ROUND)
+                open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}', pointer)
@@ -96,7 +97,7 @@ def main(step):
                 stop_price = entry_price * (1 - stop_percent) if STEP_PRICE is None else STEP_PRICE * (1 - stop_percent)
                 if current_price < stop_price:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                     profit_array = copy.copy(eth_profit_array)
 
                     STEP += 1
@@ -118,9 +119,9 @@ def main(step):
                         if current_price > (entry_price + delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             else:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (current_price - entry_price), ROUND)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
@@ -136,7 +137,7 @@ def main(step):
                 if current_price > stop_price:
                     # stop loss
                     profit_array = copy.copy(eth_profit_array)
-                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                     profit_array = copy.copy(eth_profit_array)
 
                     STEP += 1
@@ -158,9 +159,9 @@ def main(step):
                         if current_price < (entry_price - delta):
                             # take profit
                             if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             else:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent)
+                                close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
                             profit = round((max_position * (contracts / 10)) * (entry_price - current_price), ROUND)
                             STEP += 1
                             REMAINDER -= (contracts / 10)
@@ -181,7 +182,7 @@ counter_r = 1
 while time.time() <= timeout:
     try:
         # if counter_r % 20 == 0:
-        #     prt("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+        #     ("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counter_r)
         counter_r = counter_r + 1
         if counter_r > 120:

@@ -34,7 +34,7 @@ def get_wallet_balance():
 
 # функция запрашивает с площадки последние 500 свечей по пять минут и возвращает датафрейм с нужными столбцами
 
-def get_futures_klines(symbol, limit=500):
+def get_futures_klines(symbol, limit, pointer):
     try:
         x = requests.get(
             'https://binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
@@ -48,7 +48,7 @@ def get_futures_klines(symbol, limit=500):
         df['volume'] = df['volume'].astype(float)
         return df
     except Exception as e:
-        prt(f'Ошибка при получении истории последних свечей: \n{e}')
+        prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -56,7 +56,7 @@ def get_futures_klines(symbol, limit=500):
 # close_price - берет текущую цену + 1%. Зачем нужен?
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
 
-def open_position(symbol, s_l, quantity_l, stop_percent):
+def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
     try:
         sprice = get_symbol_price(symbol)
 
@@ -95,14 +95,14 @@ def open_position(symbol, s_l, quantity_l, stop_percent):
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка открытия позиции: \n{e}')
+        prt(f'Ошибка открытия позиции: \n{e}', pointer)
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
 # собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
-def close_position(symbol, s_l, quantity_l, stop_percent):
+def close_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
     try:
         sprice = get_symbol_price(symbol)
 
@@ -133,10 +133,10 @@ def close_position(symbol, s_l, quantity_l, stop_percent):
             response = send_signed_request('POST', '/fapi/v1/order', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка закрытия позиции: \n{e}')
+        prt(f'Ошибка закрытия позиции: \n{e}', pointer)
 
 
-def get_opened_positions(symbol):
+def get_opened_positions(symbol, pointer):
     try:
         status = client.futures_account()
         positions = pd.DataFrame(status['positions'])
@@ -153,7 +153,7 @@ def get_opened_positions(symbol):
             pos = ""
         return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
     except Exception as e:
-        prt(f'Ошибка при получении данных по открытой позиции: \n{e}')
+        prt(f'Ошибка при получении данных по открытой позиции: \n{e}', pointer)
 
 
 # Close all orders
@@ -250,9 +250,9 @@ def PrepareDF(DF):
 
 # функция проверяет локальный минимум/максимум, близость к краю канала и текущий угол наклона тренда и возвращает
 # long, short или ''
-def check_if_signal(symbol, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, klines, atr):
+def check_if_signal(symbol, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, klines, atr, pointer):
     try:
-        ohlc = get_futures_klines(symbol, 100)
+        ohlc = get_futures_klines(symbol, 100, pointer)
         prepared_df = PrepareDF(ohlc)
         mean_atr = prepared_df[80:95]['ATR'].mean()
         delta = prepared_df['close'][0] - prepared_df['close'][klines]
@@ -274,7 +274,7 @@ def check_if_signal(symbol, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S
 
         return signal
     except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e}')
+        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
 
 
 telegram_delay = 12
@@ -282,7 +282,7 @@ bot_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("CHAT_ID")
 
 
-def getTPSLfrom_telegram(SYMBOL):
+def getTPSLfrom_telegram(SYMBOL, stop_percent, round_n, pointer):
     try:
         strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
         response = requests.get(strr)
@@ -295,19 +295,19 @@ def getTPSLfrom_telegram(SYMBOL):
 
             if (time.time() - datet) < telegram_delay:
                 if 'quit' in textt:
-                    prt('Завершение работы скрипта')
+                    prt('Завершение работы скрипта', pointer)
                     quit()
                 if 'exit' in textt:
-                    prt('Завершение работы скрипта')
+                    prt('Завершение работы скрипта', pointer)
                     exit()
                 if 'hello' in textt:
                     telegram_bot_sendtext('Hello. How are you?')
                 if 'close_pos' in textt:
-                    position = get_opened_positions(SYMBOL)
+                    position = get_opened_positions(SYMBOL, pointer)
                     open_sl = position[0]
                     quantity = position[1]
-                    close_position(SYMBOL, open_sl, abs(quantity))
-                    prt('Позиция закрыта в ручном режиме')
+                    close_position(SYMBOL, open_sl, abs(quantity), stop_percent, round_n, pointer)
+                    prt('Позиция закрыта в ручном режиме', pointer)
     except Exception as e:
         print(f'Ошибка подключения к телеграм: \n{e}')
 
