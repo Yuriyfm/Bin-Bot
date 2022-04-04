@@ -13,7 +13,6 @@ SLOPE_L = 20
 POS_IN_CHANNEL_S = 0.8
 POS_IN_CHANNEL_L = 0.3
 KLINES = 70
-
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -113,7 +112,7 @@ def main(step):
 
                 else:
                     temp_arr = copy.copy(profit_array)
-                    for j in range(0, len(temp_arr) - 1):
+                    for j in range(0, len(temp_arr)):
                         delta = temp_arr[j][0]
                         contracts = temp_arr[j][1]
                         if current_price > (entry_price + delta):
@@ -129,7 +128,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {abs(1 - REMAINDER) * 100}% сделки {open_sl}, шаг {STEP}', pointer)
+                            prt(f'Закрыл {round((1 - REMAINDER) * 100)}% сделки {open_sl}, шаг {STEP}', pointer)
                             del profit_array[0]
 
             if open_sl == 'short':
@@ -153,7 +152,7 @@ def main(step):
 
                 else:
                     temp_arr = copy.copy(profit_array)
-                    for j in range(0, len(temp_arr) - 1):
+                    for j in range(0, len(temp_arr)):
                         delta = temp_arr[j][0]
                         contracts = temp_arr[j][1]
                         if current_price < (entry_price - delta):
@@ -169,7 +168,7 @@ def main(step):
                             STAT['positive'] += 1
                             STAT['balance'] += profit
                             STEP_PRICE = current_price
-                            prt(f'Закрыл {abs(1 - REMAINDER) * 100}% сделки {open_sl}, шаг {STEP}', pointer)
+                            prt(f'Закрыл {round((1 - REMAINDER) * 100)}% сделки {open_sl}, шаг {STEP}', pointer)
                             del profit_array[0]
     except Exception as e:
         prt(f'Ошибка в main: \n{e}', pointer)
