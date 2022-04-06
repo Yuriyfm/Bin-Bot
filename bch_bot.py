@@ -8,11 +8,11 @@ from functions import get_symbol_price, get_wallet_balance, open_position, close
 
 SECRET = os.getenv("SECRET")
 SYMBOL = 'BCHUSDT'
-SLOPE_S = 45
+SLOPE_S = 35
 SLOPE_L = 20
 POS_IN_CHANNEL_S = 0.8
-POS_IN_CHANNEL_L = 0.3
-KLINES = 70
+POS_IN_CHANNEL_L = 0.5
+KLINES = 129
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -23,7 +23,7 @@ ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-max_position = round((balance * 0.3) / price, 3)
+max_position = round((balance * 0.1) / price, 3)
 
 
 eth_profit_array = [[round(price * 0.008, 3), 2], [round(price * 0.012, 3), 3],

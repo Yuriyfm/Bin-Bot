@@ -252,21 +252,21 @@ def PrepareDF(DF):
 # long, short или ''
 def check_if_signal(symbol, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, klines, atr, pointer):
     try:
-        ohlc = get_futures_klines(symbol, 100, pointer)
+        ohlc = get_futures_klines(symbol, 130, pointer)
         prepared_df = PrepareDF(ohlc)
-        mean_atr = prepared_df[80:95]['ATR'].mean()
+        mean_atr = prepared_df[110:125]['ATR'].mean()
         delta = prepared_df['close'][0] - prepared_df['close'][klines]
         signal = ""  # return value
 
-        i = 98  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
+        i = 128  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-        if isLCC(prepared_df, i - 1) > 0 and prepared_df['close'][0] * round(klines/10000, 3) >= delta:
+        if isLCC(prepared_df, i - 1) > 0 and delta <= 0:
             # found bottom - OPEN LONG
             if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL_L and prepared_df['slope'][i - 1] < -SLOPE_L and mean_atr < atr:
                 # found a good enter point for LONG
                 signal = 'long'
 
-        if isHCC(prepared_df, i - 1) > 0 and delta >= prepared_df['close'][0] * -round(klines/10000, 3):
+        if isHCC(prepared_df, i - 1) > 0 and delta >= 0:
             # found top - OPEN SHORT
             if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S and prepared_df['slope'][i - 1] > SLOPE_S and mean_atr < atr:
                 # found a good enter point for SHORT

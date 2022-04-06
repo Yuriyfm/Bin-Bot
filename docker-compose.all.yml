@@ -30,21 +30,3 @@ services:
     restart: always
     env_file:
       - ./.env
-  etcbot:
-    image: etcbot_image
-    container_name: etc_bot
-    build:
-      context: .
-      dockerfile: Dockerfile.etc
-    restart: always
-    env_file:
-      - ./.env
-  bnbbot:
-    image: bnbbot_image
-    container_name: bnb_bot
-    build:
-      context: .
-      dockerfile: Dockerfile.bnb
-    restart: always
-    env_file:
-      - ./.env
