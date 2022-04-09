@@ -9,10 +9,10 @@ from functions import get_symbol_price, get_wallet_balance, open_position, close
 SECRET = os.getenv("SECRET")
 SYMBOL = 'BCHUSDT'
 SLOPE_S = 35
-SLOPE_L = 20
-POS_IN_CHANNEL_S = 0.8
-POS_IN_CHANNEL_L = 0.5
-KLINES = 130
+SLOPE_L = 35
+POS_IN_CHANNEL_S = 0.65
+POS_IN_CHANNEL_L = 0.35
+KLINES = 100
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
