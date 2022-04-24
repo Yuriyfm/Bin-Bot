@@ -8,11 +8,14 @@ from functions import get_symbol_price, get_wallet_balance, open_position, close
 
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
-SLOPE_S = 35
-SLOPE_L = 35
-POS_IN_CHANNEL_S = 0.65
-POS_IN_CHANNEL_L = 0.35
-KLINES = 100
+SLOPE_S = 20
+SLOPE_L = -20
+SL_X_L = -3.5
+SL_X_S = 4
+POS_IN_CHANNEL_S = 0.5
+POS_IN_CHANNEL_L = 0.45
+SL_X_L_2 = 3.5
+KLINES = 110
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
@@ -26,8 +29,8 @@ balance = get_wallet_balance()
 max_position = round((balance * 0.1) / price, 3)
 
 
-eth_profit_array = [[round(price * 0.008, 3), 2], [round(price * 0.012, 3), 3],
-                    [round(price * 0.016, 3), 3], [round(price * 0.020, 3), 2]]
+eth_profit_array = [[round(price * 0.013, 3), 5],
+                    [round(price * 0.017, 3), 3], [round(price * 0.020, 3), 2]]
 
 DEAL = {}
 
@@ -60,7 +63,7 @@ def main(step):
         if open_sl == "":  # no position
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
-            signal = check_if_signal(SYMBOL, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, KLINES, ATR, pointer)
+            signal = check_if_signal(SYMBOL, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, KLINES, ATR, pointer, SL_X_L, SL_X_S, SL_X_L_2)
             profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
@@ -93,7 +96,7 @@ def main(step):
             current_price = get_symbol_price(SYMBOL)
             quantity = position[1]
             if open_sl == 'long':
-                stop_price = entry_price * (1 - stop_percent) if STEP_PRICE is None else STEP_PRICE * (1 - stop_percent)
+                stop_price = entry_price * (1 - stop_percent) if STEP_PRICE is None else STEP_PRICE * 0.999
                 if current_price < stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
@@ -132,7 +135,7 @@ def main(step):
                             del profit_array[0]
 
             if open_sl == 'short':
-                stop_price = entry_price * (1 + stop_percent) if STEP_PRICE is None else STEP_PRICE * (1 + stop_percent)
+                stop_price = entry_price * (1 + stop_percent) if STEP_PRICE is None else STEP_PRICE * 1.001
                 if current_price > stop_price:
                     # stop loss
                     profit_array = copy.copy(eth_profit_array)
