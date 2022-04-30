@@ -33,9 +33,9 @@ stop_percent = 0.008
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 
 price = get_symbol_price(SYMBOL)
+
 balance = get_wallet_balance()
 max_position = round(balance / price, 3)
-
 
 eth_profit_array = [[round(price * 0.013, 3), 3],
                     [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
@@ -56,6 +56,8 @@ def main(step):
     global STAT
     global STEP
     global REMAINDER
+    global balance
+    global max_position
 
     current_price = get_symbol_price(SYMBOL)
 
@@ -82,6 +84,8 @@ def main(step):
 
             if signal == 'long':
                 now = datetime.datetime.now()
+                balance = get_wallet_balance()
+                max_position = round(balance / price, 3)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -90,6 +94,8 @@ def main(step):
 
             elif signal == 'short':
                 now = datetime.datetime.now()
+                balance = get_wallet_balance()
+                max_position = round(balance / price, 3)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -206,8 +212,6 @@ counter_r = 1
 
 while time.time() <= timeout:
     try:
-        # if counter_r % 20 == 0:
-        #     ("script continue running at " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         main(counter_r)
         counter_r = counter_r + 1
         if counter_r > 120:
