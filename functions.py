@@ -250,28 +250,41 @@ def PrepareDF(DF):
 
 # функция проверяет локальный минимум/максимум, близость к краю канала и текущий угол наклона тренда и возвращает
 # long, short или ''
-def check_if_signal(symbol, POS_IN_CHANNEL_L, POS_IN_CHANNEL_S, SLOPE_L, SLOPE_S, klines, atr, pointer, SL_X_L, SL_X_S, SL_X_L_2):
+def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
+                                     ATR_S, ATR_L, ATR_KLINE_L, ATR_KLINE_S, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
+                                     SL_X_L_2, SL_X_KLINE_L_2, KLINES):
     try:
-        ohlc = get_futures_klines(symbol, klines, pointer)
+        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         prepared_df = PrepareDF(ohlc)
-        mean_atr = prepared_df[klines - 18: klines - 3]['ATR'].mean()
-        # delta = prepared_df['close'][0] - prepared_df['close'][klines - 1]
-        mean_slope = prepared_df[klines - 87: klines - 1]['slope'].mean()
-        mean_slope_2 = prepared_df['slope'].mean()
         signal = ""  # return value
-        i = klines - 2  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
+        i = KLINES - 2  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-        if isLCC(prepared_df, i - 1) > 0 and mean_slope > SL_X_L and mean_slope_2 < SL_X_L_2:
-            # found bottom - OPEN LONG
-            if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL_L and prepared_df['slope'][i - 1] < SLOPE_L and mean_atr < 11:
-                # found a good enter point for LONG
-                signal = 'long'
+        mean_atr_l = prepared_df[KLINES - 1 - ATR_KLINE_L:KLINES - 1]['ATR'].mean()
+        mean_atr_s = prepared_df[KLINES - 1 - ATR_KLINE_S:KLINES - 1]['ATR'].mean()
 
-        if isHCC(prepared_df, i - 1) > 0 and mean_slope < SL_X_S:
-            # found top - OPEN SHORT
-            if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S and prepared_df['slope'][i - 1] > SLOPE_S and mean_atr < 11:
-                # found a good enter point for SHORT
-                signal = 'short'
+        mean_slope_l = prepared_df[KLINES - 1 - SL_X_KLINE_L:KLINES - 1]['slope'].mean()
+        mean_slope_l_2 = prepared_df[KLINES - 1 - SL_X_KLINE_L_2:KLINES - 1]['slope'].mean()
+        mean_slope_s = prepared_df[KLINES - 1 - SL_X_KLINE_S:KLINES - 1]['slope'].mean()
+
+        if mean_atr_l < ATR_L:
+            if mean_slope_l > SL_X_L and mean_slope_l_2 < SL_X_L_2:
+                if isLCC(prepared_df, i - 1) > 0:
+                    # found bottom - OPEN LONG
+                    if prepared_df['position_in_channel'][i - 1] < POS_IN_CHANNEL_L:
+                        # close to top of channel
+                        if prepared_df['slope'][i - 1] < SLOPE_L:
+                            # found a good enter point for LONG
+                            signal = 'long'
+
+        if mean_atr_s < ATR_S:
+            if mean_slope_s < SL_X_S:
+                if isHCC(prepared_df, i - 1) > 0:
+                    # found top - OPEN SHORT
+                    if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S:
+                        # close to top of channel
+                        if prepared_df['slope'][i - 1] > SLOPE_S:
+                            # found a good enter point for SHORT
+                            signal = 'short'
 
         return signal
     except Exception as e:
