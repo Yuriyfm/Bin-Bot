@@ -86,7 +86,7 @@ def main(step):
             if signal == 'long':
                 now = datetime.datetime.now()
                 balance = get_wallet_balance()
-                max_position = round((balance * 0.5) / price, 3)
+                max_position = round((balance * 0.5) / price, ROUND)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -97,7 +97,7 @@ def main(step):
             elif signal == 'short':
                 now = datetime.datetime.now()
                 balance = get_wallet_balance()
-                max_position = round((balance * 0.5) / price, 3)
+                max_position = round((balance * 0.5) / price, ROUND)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
