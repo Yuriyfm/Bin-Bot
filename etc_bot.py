@@ -90,6 +90,7 @@ def main(step):
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
+                DEAL['start_price'] = current_price
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
@@ -100,6 +101,7 @@ def main(step):
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
+                DEAL['start_price'] = current_price
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
