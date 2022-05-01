@@ -12,7 +12,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = 'ETCUSDT'
 client = Client(KEY, SECRET)
 
 
@@ -35,16 +35,13 @@ SL_X_KLINE_L_2 = 110
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
-ROUND = 3
+ROUND = 2
 stop_percent = 0.008
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 
 price = get_symbol_price(SYMBOL)
 balance = get_wallet_balance()
-max_position = round(balance / price, 3)
+max_position = round(balance * 0.1 / price, 2)
 
 
-res = check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
-                                     ATR_S, ATR_L, ATR_KLINE_L, ATR_KLINE_S, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
-                                     SL_X_L_2, SL_X_KLINE_L_2, KLINES)
-print(res)
+open_position(SYMBOL, 'long', max_position, stop_percent, ROUND, pointer)
