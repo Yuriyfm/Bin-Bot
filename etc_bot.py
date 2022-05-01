@@ -38,8 +38,8 @@ balance = get_wallet_balance()
 max_position = round((balance *0.5)/ price, ROUND)
 
 
-eth_profit_array = [[round(price * 0.013, 3), 3],
-                    [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
+eth_profit_array = [[round(price * 0.013, ROUND), 3],
+                    [round(price * 0.017, ROUND), 4], [round(price * 0.021, ROUND), 3]]
 
 DEAL = {}
 
