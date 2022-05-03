@@ -61,7 +61,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), round_n))
+            close_price = str(round(sprice * (1 + stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
@@ -79,7 +79,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 - stop_percent), round_n))
+            close_price = str(round(sprice * (1 - stop_percent), 2))
             params = {
                 "batchOrders": [
                     {
