@@ -34,12 +34,12 @@ pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
+
 balance = get_wallet_balance()
-max_position = round((balance *0.5)/ price, ROUND)
+max_position = round((balance * 0.1) / price, ROUND)
 
-
-eth_profit_array = [[round(price * 0.013, ROUND), 3],
-                    [round(price * 0.017, ROUND), 4], [round(price * 0.021, ROUND), 3]]
+eth_profit_array = [[round(price * 0.013, 3), 3],
+                    [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
 
 DEAL = {}
 
@@ -85,8 +85,6 @@ def main(step):
 
             if signal == 'long':
                 now = datetime.datetime.now()
-                balance = get_wallet_balance()
-                max_position = round((balance * 0.5) / price, ROUND)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -96,8 +94,6 @@ def main(step):
 
             elif signal == 'short':
                 now = datetime.datetime.now()
-                balance = get_wallet_balance()
-                max_position = round((balance * 0.5) / price, ROUND)
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
