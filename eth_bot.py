@@ -36,7 +36,7 @@ ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 price = get_symbol_price(SYMBOL)
 
 balance = get_wallet_balance()
-max_position = round(balance / price, ROUND)
+max_position = round((balance * 0.1) / price, ROUND)
 
 eth_profit_array = [[round(price * 0.013, 3), 3], [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
 
@@ -81,6 +81,7 @@ def main(step):
             signal = check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
                                      ATR_S, ATR_L, ATR_KLINE_L, ATR_KLINE_S, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
                                      SL_X_L_2, SL_X_KLINE_L_2, KLINES)
+            profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
                 now = datetime.datetime.now()
@@ -104,12 +105,12 @@ def main(step):
 
             entry_price = position[5]  # enter price
             quantity = position[1]
-            profit_array = copy.copy(eth_profit_array)
             if open_sl == 'long':
                 stop_price = entry_price * (1 - stop_percent) if STEP_PRICE is None else STEP_PRICE * 0.999
                 if current_price < stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                    profit_array = copy.copy(eth_profit_array)
                     STEP += 1
                     profit = round(abs(quantity) * (current_price - entry_price), ROUND)
                     if STEP == 1:
@@ -159,6 +160,7 @@ def main(step):
                 if current_price > stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), ROUND), stop_percent, ROUND, pointer)
+                    profit_array = copy.copy(eth_profit_array)
                     STEP += 1
                     profit = round(abs(quantity) * (entry_price - current_price), 3)
                     if STEP == 1:
