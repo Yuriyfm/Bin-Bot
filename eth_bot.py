@@ -11,25 +11,27 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 SLOPE_S = 20
 SLOPE_L = -20
-SL_X_L = -3.5
-SL_X_S = 4
-SL_X_KLINE_L = 85
-SL_X_KLINE_S = 90
+SL_X_L = -5.5
+SL_X_S = 4.5
+SL_X_KLINE_L = 95
+SL_X_KLINE_S = 100
 SL_X_KLINE_L_2 = 110
-ATR_S = 11
-ATR_L = 11.5
+SL_X_KLINE_S_2 = 45
+ATR_ORIG_S = 9
+ATR_ORIG_L = 11.5
 ATR_KLINE_L = 95
 ATR_KLINE_S = 117
 POS_IN_CHANNEL_S = 0.5
 POS_IN_CHANNEL_L = 0.45
 SL_X_L_2 = 3.5
+SL_X_S_2 = -8
 KLINES = 120
 
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
 ROUND = 3
-stop_percent = 0.008
+stop_percent = 0.0075
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
@@ -79,8 +81,8 @@ def main(step):
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
-                                     ATR_S, ATR_L, ATR_KLINE_L, ATR_KLINE_S, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
-                                     SL_X_L_2, SL_X_KLINE_L_2, KLINES)
+                                     ATR_ORIG_S, ATR_ORIG_L, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
+                                     SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2, SL_X_KLINE_L_2, KLINES)
             profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
