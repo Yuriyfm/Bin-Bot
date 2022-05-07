@@ -275,9 +275,9 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
                         if prepared_df["slope"][i - 1] < SLOPE_L:
                             # found a good enter point for LONG
                             signal = 'long'
-                            prt(f'ATR: {atr}, slope_l: {prepared_df["slope"][i - 1]}, mean_slope_l({SL_X_KLINE_L}kl): {mean_slope_l}, '
-                                f'mean_slope_l_2({SL_X_KLINE_L_2}kl): {mean_slope_l_2}, '
-                                f'POS: {prepared_df["position_in_channel"][i - 1]}, ', pointer)
+                            # prt(f'ATR: {atr}, slope_l: {prepared_df["slope"][i - 1]}, mean_slope_l({SL_X_KLINE_L}kl): {mean_slope_l}, '
+                            #     f'mean_slope_l_2({SL_X_KLINE_L_2}kl): {mean_slope_l_2}, '
+                            #     f'POS: {prepared_df["position_in_channel"][i - 1]}, ', pointer)
 
         if atr < ATR_ORIG_S:
             if mean_slope_s < SL_X_S and mean_slope_s_2 > SL_X_S_2:
@@ -288,9 +288,9 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
                         if prepared_df["slope"][i - 1] > SLOPE_S:
                             # found a good enter point for SHORT
                             signal = 'short'
-                            prt(f'ATR: {atr}, slope_l: {prepared_df["slope"][i - 1]}, mean_slope_s({SL_X_KLINE_S}kl): {mean_slope_s}, '
-                                f'mean_slope_s_2({SL_X_KLINE_S_2}kl): {mean_slope_s_2}, '
-                                f'POS: {prepared_df["position_in_channel"][i - 1]}, ', pointer)
+                            # prt(f'ATR: {atr}, slope_l: {prepared_df["slope"][i - 1]}, mean_slope_s({SL_X_KLINE_S}kl): {mean_slope_s}, '
+                            #     f'mean_slope_s_2({SL_X_KLINE_S_2}kl): {mean_slope_s_2}, '
+                            #     f'POS: {prepared_df["position_in_channel"][i - 1]}, ', pointer)
 
         return signal
     except Exception as e:
