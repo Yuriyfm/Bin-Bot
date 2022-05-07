@@ -259,7 +259,7 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
         signal = ""  # return value
         i = KLINES - 2  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
 
-        atr = prepared_df[i - 1]['ATR']
+        atr = prepared_df['ATR'][i - 1]
 
         mean_slope_l = prepared_df[KLINES - 1 - SL_X_KLINE_L:KLINES - 1]['slope'].mean()
         mean_slope_l_2 = prepared_df[KLINES - 1 - SL_X_KLINE_L_2:KLINES - 1]['slope'].mean()
@@ -294,7 +294,7 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
 
         return signal
     except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
 
 
 telegram_delay = 12

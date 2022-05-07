@@ -44,4 +44,4 @@ balance = get_wallet_balance()
 max_position = round(balance * 0.1 / price, 2)
 
 
-open_position(SYMBOL, 'long', max_position, stop_percent, ROUND, pointer)
+print(balance)
