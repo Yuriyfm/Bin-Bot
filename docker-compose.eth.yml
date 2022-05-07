@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.eth
-    restart: always
+#    restart: always
     env_file:
       - ./.env
 

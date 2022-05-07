@@ -29,7 +29,7 @@ STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
 ROUND = 2
-stop_percent = 0.008
+stop_percent = 0.0075
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 

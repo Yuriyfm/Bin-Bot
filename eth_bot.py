@@ -11,21 +11,22 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 SLOPE_S = 20
 SLOPE_L = -20
-SL_X_L = -5.5
-SL_X_S = 4.5
-SL_X_KLINE_L = 95
-SL_X_KLINE_S = 100
-SL_X_KLINE_L_2 = 110
-SL_X_KLINE_S_2 = 45
+SL_X_L = -4
+SL_X_S = 3.5
+SL_X_KLINE_L = 85
+SL_X_KLINE_S = 95
+SL_X_KLINE_L_2 = 100
+SL_X_KLINE_S_2 = 75
 ATR_ORIG_S = 9
-ATR_ORIG_L = 11.5
+ATR_ORIG_L = 12
 ATR_KLINE_L = 95
 ATR_KLINE_S = 117
 POS_IN_CHANNEL_S = 0.5
 POS_IN_CHANNEL_L = 0.45
-SL_X_L_2 = 3.5
-SL_X_S_2 = -8
+SL_X_L_2 = 4.5
+SL_X_S_2 = -5
 KLINES = 120
+
 
 STEP_PRICE = None
 STEP = 0
@@ -38,7 +39,7 @@ ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 price = get_symbol_price(SYMBOL)
 
 balance = get_wallet_balance()
-max_position = round((balance * 0.1) / price, ROUND)
+max_position = round(balance / price, ROUND)
 
 eth_profit_array = [[round(price * 0.013, 3), 3], [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
 
@@ -86,20 +87,26 @@ def main(step):
             profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
+                balance = get_wallet_balance()
+                max_position = round(balance / price, ROUND)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start_price'] = current_price
+                DEAL['target_price'] = current_price * 1.013
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
             elif signal == 'short':
+                balance = get_wallet_balance()
+                max_position = round(balance / price, ROUND)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start_price'] = current_price
+                DEAL['target_price'] = current_price * 0.987
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
