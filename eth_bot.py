@@ -94,7 +94,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start_price'] = current_price
-                DEAL['target_price'] = current_price * 1.013
+                DEAL['target_price'] = round(current_price * 1.013, 3)
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
@@ -106,7 +106,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start_price'] = current_price
-                DEAL['target_price'] = current_price * 0.987
+                DEAL['target_price'] = round(current_price * 0.987, 3)
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
