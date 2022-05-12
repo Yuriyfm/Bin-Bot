@@ -251,8 +251,7 @@ def PrepareDF(DF):
 # функция проверяет локальный минимум/максимум, близость к краю канала и текущий угол наклона тренда и возвращает
 # long, short или ''
 def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
-                                     ATR_ORIG_S, ATR_ORIG_L, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
-                                     SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2, SL_X_KLINE_L_2, KLINES):
+                    POS_IN_CHANNEL_S, POS_IN_CHANNEL_L, SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2, SL_X_KLINE_L_2, KLINES):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         prepared_df = PrepareDF(ohlc)
@@ -266,33 +265,31 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
         mean_slope_s_2 = prepared_df[KLINES - 1 - SL_X_KLINE_S_2:KLINES - 1]['slope'].mean()
         mean_slope_s = prepared_df[KLINES - 1 - SL_X_KLINE_S:KLINES - 1]['slope'].mean()
 
-        if atr < ATR_ORIG_L:
-            if mean_slope_l > SL_X_L and mean_slope_l_2 < SL_X_L_2:
-                if isLCC(prepared_df, i - 1) > 0:
-                    # found bottom - OPEN LONG
-                    if prepared_df["position_in_channel"][i - 1] < POS_IN_CHANNEL_L:
-                        # close to top of channel
-                        if prepared_df["slope"][i - 1] < SLOPE_L:
-                            # found a good enter point for LONG
-                            signal = 'long'
-                            prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
-                                f'mean slope l({round(SL_X_KLINE_L, 3)}kl): {round(mean_slope_l, 3)}, '
-                                f'mean slope l 2({round(SL_X_KLINE_L_2, 3)}kl): {round(mean_slope_l_2, 3)}, '
-                                f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
+        if mean_slope_l > SL_X_L and mean_slope_l_2 < SL_X_L_2:
+            if isLCC(prepared_df, i - 1) > 0:
+                # found bottom - OPEN LONG
+                if prepared_df["position_in_channel"][i - 1] < POS_IN_CHANNEL_L:
+                    # close to top of channel
+                    if prepared_df["slope"][i - 1] < SLOPE_L:
+                        # found a good enter point for LONG
+                        signal = 'long'
+                        prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
+                            f'mean slope l({round(SL_X_KLINE_L, 3)}kl): {round(mean_slope_l, 3)}, '
+                            f'mean slope l 2({round(SL_X_KLINE_L_2, 3)}kl): {round(mean_slope_l_2, 3)}, '
+                            f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
 
-        if atr < ATR_ORIG_S:
-            if mean_slope_s < SL_X_S and mean_slope_s_2 > SL_X_S_2:
-                if isHCC(prepared_df, i - 1) > 0:
-                    # found top - OPEN SHORT
-                    if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S:
-                        # close to top of channel
-                        if prepared_df["slope"][i - 1] > SLOPE_S:
-                            # found a good enter point for SHORT
-                            signal = 'short'
-                            prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
-                                f'mean slope s({round(SL_X_KLINE_S, 3)}kl): {round(mean_slope_s, 3)}, '
-                                f'mean slope s 2({round(SL_X_KLINE_S_2, 3)}kl): {round(mean_slope_s_2, 3)}, '
-                                f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
+        if mean_slope_s < SL_X_S and mean_slope_s_2 > SL_X_S_2:
+            if isHCC(prepared_df, i - 1) > 0:
+                # found top - OPEN SHORT
+                if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S:
+                    # close to top of channel
+                    if prepared_df["slope"][i - 1] > SLOPE_S:
+                        # found a good enter point for SHORT
+                        signal = 'short'
+                        prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
+                            f'mean slope s({round(SL_X_KLINE_S, 3)}kl): {round(mean_slope_s, 3)}, '
+                            f'mean slope s 2({round(SL_X_KLINE_S_2, 3)}kl): {round(mean_slope_s_2, 3)}, '
+                            f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
 
         return signal
     except Exception as e:

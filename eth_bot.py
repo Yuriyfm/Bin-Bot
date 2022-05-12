@@ -9,39 +9,64 @@ from functions import get_symbol_price, get_wallet_balance, open_position, close
 
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
+# SLOPE_S = 20
+# SLOPE_L = -20
+# SL_X_L = -4
+# SL_X_S = 3.5
+# SL_X_KLINE_L = 85
+# SL_X_KLINE_S = 95
+# SL_X_KLINE_L_2 = 100
+# SL_X_KLINE_S_2 = 75
+# ATR_ORIG_S = 9
+# ATR_ORIG_L = 12
+# ATR_KLINE_L = 95
+# ATR_KLINE_S = 117
+# POS_IN_CHANNEL_S = 0.5
+# POS_IN_CHANNEL_L = 0.45
+# SL_X_L_2 = 4.5
+# SL_X_S_2 = -5
+# KLINES = 120
+
 SLOPE_S = 20
 SLOPE_L = -20
-SL_X_L = -4
-SL_X_S = 3.5
-SL_X_KLINE_L = 85
-SL_X_KLINE_S = 95
-SL_X_KLINE_L_2 = 100
-SL_X_KLINE_S_2 = 75
-ATR_ORIG_S = 9
-ATR_ORIG_L = 12
-ATR_KLINE_L = 95
-ATR_KLINE_S = 117
+SL_X_L = -5
+SL_X_S = 3
+SL_X_KLINE_L = 75
+SL_X_KLINE_S = 80
+SL_X_KLINE_L_2 = 120
+SL_X_KLINE_S_2 = 105
 POS_IN_CHANNEL_S = 0.5
 POS_IN_CHANNEL_L = 0.45
-SL_X_L_2 = 4.5
-SL_X_S_2 = -5
+SL_X_L_2 = 6.5
+SL_X_S_2 = -10
 KLINES = 120
 
+# last: 10.867 %
+# st_p: 0.013, parr: [[0.035, 10]]
+# sl_l: -20, pos_l: 0.45
+# sl_x_l: -5 (75 kl), sl_x_l_2: 6.5 (120 kl)
+# sl_s: 20, pos_s: 0.5
+# sl_x_s: 3 (80 kl), sl_x_s_2: -10 (105 kl)
+# Кол-во сделок: 16
+# Минусовых: 9.0: short 6.0, long 3.0
+# Плюсовых: 7.0: short 5.0, long 2.0
+# Разница: -2.0
 
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
 ROUND = 3
-stop_percent = 0.0075
+stop_percent = 0.013
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 
 balance = get_wallet_balance()
-max_position = round(balance / price, ROUND)
+max_position = round(balance * 0.3 / price, ROUND)
 
-eth_profit_array = [[round(price * 0.013, 3), 3], [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
+# eth_profit_array = [[round(price * 0.013, 3), 3], [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
+eth_profit_array = [[round(price * 0.03, 3), 3]]
 
 DEAL = {}
 
@@ -82,13 +107,13 @@ def main(step):
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
-                                     ATR_ORIG_S, ATR_ORIG_L, POS_IN_CHANNEL_S, POS_IN_CHANNEL_L,
-                                     SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2, SL_X_KLINE_L_2, KLINES)
+                                     POS_IN_CHANNEL_S, POS_IN_CHANNEL_L, SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2,
+                                     SL_X_KLINE_L_2, KLINES)
             profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
                 balance = get_wallet_balance()
-                max_position = round(balance / price, ROUND)
+                max_position = round(balance * 0.3 / price, ROUND)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
@@ -100,7 +125,7 @@ def main(step):
 
             elif signal == 'short':
                 balance = get_wallet_balance()
-                max_position = round(balance / price, ROUND)
+                max_position = round(balance * 0.3 / price, ROUND)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, ROUND, pointer)
                 DEAL['type'] = signal
