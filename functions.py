@@ -276,7 +276,7 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
                         prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
                             f'mean slope l({round(SL_X_KLINE_L, 3)}kl): {round(mean_slope_l, 3)}, '
                             f'mean slope l 2({round(SL_X_KLINE_L_2, 3)}kl): {round(mean_slope_l_2, 3)}, '
-                            f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
+                            f'POS: {round(prepared_df["position_in_channel"][i - 1], 3)}, ', pointer)
 
         if mean_slope_s < SL_X_S and mean_slope_s_2 > SL_X_S_2:
             if isHCC(prepared_df, i - 1) > 0:
@@ -289,7 +289,7 @@ def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLI
                         prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
                             f'mean slope s({round(SL_X_KLINE_S, 3)}kl): {round(mean_slope_s, 3)}, '
                             f'mean slope s 2({round(SL_X_KLINE_S_2, 3)}kl): {round(mean_slope_s_2, 3)}, '
-                            f'POS: {round(prepared_df["position in channel"][i - 1], 3)}, ', pointer)
+                            f'POS: {round(prepared_df["position_in_channel"][i - 1], 3)}, ', pointer)
 
         return signal
     except Exception as e:
