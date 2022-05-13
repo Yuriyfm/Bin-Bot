@@ -41,16 +41,6 @@ SL_X_L_2 = 6.5
 SL_X_S_2 = -10
 KLINES = 120
 
-# last: 10.867 %
-# st_p: 0.013, parr: [[0.035, 10]]
-# sl_l: -20, pos_l: 0.45
-# sl_x_l: -5 (75 kl), sl_x_l_2: 6.5 (120 kl)
-# sl_s: 20, pos_s: 0.5
-# sl_x_s: 3 (80 kl), sl_x_s_2: -10 (105 kl)
-# Кол-во сделок: 16
-# Минусовых: 9.0: short 6.0, long 3.0
-# Плюсовых: 7.0: short 5.0, long 2.0
-# Разница: -2.0
 
 STEP_PRICE = None
 STEP = 0
@@ -58,7 +48,6 @@ REMAINDER = 1
 ROUND = 3
 stop_percent = 0.013
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
-ATR = indATR(get_futures_klines(SYMBOL, 500, pointer), 14)['ATR'].mean()
 
 price = get_symbol_price(SYMBOL)
 
@@ -66,7 +55,7 @@ balance = get_wallet_balance()
 max_position = round(balance * 0.3 / price, ROUND)
 
 # eth_profit_array = [[round(price * 0.013, 3), 3], [round(price * 0.017, 3), 4], [round(price * 0.021, 3), 3]]
-eth_profit_array = [[round(price * 0.03, 3), 3]]
+eth_profit_array = [[round(price * 0.035, 3), 10]]
 
 DEAL = {}
 
