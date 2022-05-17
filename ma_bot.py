@@ -23,15 +23,15 @@ client = Client(KEY, SECRET)
 STEP_PRICE = None
 STEP = 0
 REMAINDER = 1
-stop_percent = 0.004
+stop_percent = 0.002
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 balance = get_wallet_balance()
 price = get_symbol_price(SYMBOL)
-max_position = round(balance * 0.1 / price, 3)
+max_position = round(balance * 0.2 / price, 3)
 
 
-eth_profit_array = [[round(price * 0.004, 3), 2], [round(price * 0.006, 3), 3], [round(price * 0.010, 3), 3], [round(price * 0.014, 3), 2]]
+eth_profit_array = [[round(price * 0.006, 3), 2], [round(price * 0.010, 3), 3], [round(price * 0.014, 3), 3], [round(price * 0.018, 3), 2]]
 
 
 DEAL = {}
@@ -123,7 +123,7 @@ def main(step):
 
             if signal == 'long':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.1 / price, 3)
+                max_position = round(balance * 0.2 / price, 3)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, 3, pointer)
                 DEAL['type'] = signal
@@ -135,7 +135,7 @@ def main(step):
 
             elif signal == 'short':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.1 / price, 3)
+                max_position = round(balance * 0.2 / price, 3)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, 3, pointer)
                 DEAL['type'] = signal
