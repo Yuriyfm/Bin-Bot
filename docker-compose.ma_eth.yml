@@ -3,12 +3,12 @@ version: '3.7'
 
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
-  etcbot:
-    image: etcbot_image
-    container_name: etc_bot
+  mabot:
+    image: mabot_image
+    container_name: ma_bot
     build:
       context: .
-      dockerfile: Dockerfile.etc
+      dockerfile: Dockerfile.ma
     restart: always
     env_file:
       - ./.env

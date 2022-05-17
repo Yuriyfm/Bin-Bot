@@ -37,7 +37,8 @@ def get_wallet_balance():
 def get_futures_klines(symbol, limit, pointer):
     try:
         x = requests.get(
-            'https://binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
+            'https://www.binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
+        json_klines = x.json()
         df = pd.DataFrame(x.json())
         df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
         df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
@@ -301,7 +302,7 @@ bot_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("CHAT_ID")
 
 
-def getTPSLfrom_telegram(SYMBOL, stop_percent, round_n, pointer):
+def getTPSLfrom_telegram(SYMBOL, stop_percent, pointer):
     try:
         strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
         response = requests.get(strr)
@@ -325,7 +326,7 @@ def getTPSLfrom_telegram(SYMBOL, stop_percent, round_n, pointer):
                     position = get_opened_positions(SYMBOL, pointer)
                     open_sl = position[0]
                     quantity = position[1]
-                    close_position(SYMBOL, open_sl, abs(quantity), stop_percent, round_n, pointer)
+                    close_position(SYMBOL, open_sl, abs(quantity), stop_percent, 3, pointer)
                     prt('Позиция закрыта в ручном режиме', pointer)
     except Exception as e:
         print(f'Ошибка подключения к телеграм: \n{e}')
