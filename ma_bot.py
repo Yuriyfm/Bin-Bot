@@ -67,10 +67,10 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         positive_trend = (df['close'][0] - df['close'][99]) < 0
 
 
-        if prev_delta_sma and cur_delta_sma and positive_trend:
+        if prev_delta_sma and cur_delta_sma:
             signal = 'long'
 
-        if not prev_delta_sma and not cur_delta_sma and negative_trend:
+        if not prev_delta_sma and not cur_delta_sma:
             signal = 'short'
 
         return signal
