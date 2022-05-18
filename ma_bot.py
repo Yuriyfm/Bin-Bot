@@ -19,7 +19,6 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
-
 STEP_STOP_PRICE = None
 stop_percent = 0.003
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')

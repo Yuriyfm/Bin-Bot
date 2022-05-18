@@ -245,3 +245,89 @@ while time.time() <= timeout:
     except KeyboardInterrupt:
         print('\n KeyboardInterrupt. Stopping.')
         exit()
+
+
+from dotenv import load_dotenv
+from pathlib import Path
+import pandas as pd
+import copy
+import time
+import datetime
+import random
+import os
+import requests
+from functions import get_symbol_price, get_wallet_balance, open_position, close_position, \
+    get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt
+from binance import Client
+
+load_dotenv()
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
+KEY = os.getenv("KEY")
+SECRET = os.getenv("SECRET")
+SYMBOL = 'ETHUSDT'
+client = Client(KEY, SECRET)
+
+
+STEP_STOP_PRICE = None
+stop_percent = 0.003
+pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
+KLINES = 100
+price = get_symbol_price(SYMBOL)
+
+DEAL = {}
+STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
+
+
+def get_futures_klines(symbol, limit, pointer):
+    try:
+        x = requests.get(
+            'https://www.binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=1m')
+        df = pd.DataFrame(x.json())
+        df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
+        df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
+        df['open'] = df['open'].astype(float)
+        df['high'] = df['high'].astype(float)
+        df['low'] = df['low'].astype(float)
+        df['close'] = df['close'].astype(float)
+        df['volume'] = df['volume'].astype(float)
+        return df
+    except Exception as e:
+        prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
+
+
+def PrepareDF(DF):
+    df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
+    df.columns = ["date", "open", "high", "low", "close", "volume"]
+    df['SMA_25'] = df['close'].rolling(window=25).mean()
+    df['SMA_7'] = df['close'].rolling(window=7).mean()
+    df = df.set_index('date')
+    df = df.reset_index()
+    return df
+
+
+def check_if_signal(SYMBOL,  pointer, KLINES):
+    try:
+        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
+        df = PrepareDF(ohlc)
+        signal = ""  # return value
+        prev_delta_sma = df['SMA_7'][98] < df['SMA_25'][98]
+        cur_delta_sma = df['SMA_7'][99] > df['SMA_25'][99]
+        negative_trend = (df['close'][0] - df['close'][99]) > 0
+        positive_trend = (df['close'][0] - df['close'][99]) < 0
+
+
+        if prev_delta_sma and cur_delta_sma and positive_trend:
+            signal = 'long'
+
+        if not prev_delta_sma and not cur_delta_sma and negative_trend:
+            signal = 'short'
+
+        return signal
+    except Exception as e:
+        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
+
+
+
+
+
