@@ -42,7 +42,7 @@ SL_X_S_2 = -10
 KLINES = 120
 
 
-STEP_PRICE = None
+STEP_STOP_PRICE = None
 STEP = 0
 REMAINDER = 1
 ROUND = 3
@@ -68,7 +68,7 @@ profit_array = copy.copy(eth_profit_array)
 
 def main(step):
     global profit_array
-    global STEP_PRICE
+    global STEP_STOP_PRICE
     global DEAL
     global STAT
     global STEP

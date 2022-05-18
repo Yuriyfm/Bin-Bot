@@ -20,25 +20,14 @@ SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
 
-STEP_PRICE = None
-STEP = 0
-REMAINDER = 1
-stop_percent = 0.002
+STEP_STOP_PRICE = None
+stop_percent = 0.003
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
-balance = get_wallet_balance()
 price = get_symbol_price(SYMBOL)
-max_position = round(balance * 0.2 / price, 3)
-
-
-eth_profit_array = [[round(price * 0.006, 3), 2], [round(price * 0.010, 3), 3], [round(price * 0.014, 3), 3], [round(price * 0.018, 3), 2]]
-
 
 DEAL = {}
-
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
-
-profit_array = copy.copy(eth_profit_array)
 
 
 def get_futures_klines(symbol, limit, pointer):
@@ -75,12 +64,14 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         signal = ""  # return value
         prev_delta_sma = df['SMA_7'][98] < df['SMA_25'][98]
         cur_delta_sma = df['SMA_7'][99] > df['SMA_25'][99]
+        negative_trend = (df['close'][0] - df['close'][99]) > 0
+        positive_trend = (df['close'][0] - df['close'][99]) < 0
 
 
-        if prev_delta_sma and cur_delta_sma:
+        if prev_delta_sma and cur_delta_sma and positive_trend:
             signal = 'long'
 
-        if not prev_delta_sma and not cur_delta_sma:
+        if not prev_delta_sma and not cur_delta_sma and negative_trend:
             signal = 'short'
 
         return signal
@@ -90,13 +81,9 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
 
 
 def main(step):
-    global profit_array
-    global STEP_PRICE
-    global DEAL
+    global STEP_STOP_PRICE
     global STAT
-    global STEP
-    global REMAINDER
-    global balance
+    global DEAL
     global max_position
 
     current_price = get_symbol_price(SYMBOL)
@@ -119,7 +106,6 @@ def main(step):
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, KLINES)
-            profit_array = copy.copy(eth_profit_array)
 
             if signal == 'long':
                 balance = get_wallet_balance()
@@ -127,9 +113,8 @@ def main(step):
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, 3, pointer)
                 DEAL['type'] = signal
-                DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
-                DEAL['start_price'] = current_price
-                DEAL['target_price'] = round(current_price * 1.013, 3)
+                DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
+                DEAL['start price'] = current_price
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
 
@@ -139,113 +124,61 @@ def main(step):
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, stop_percent, 3, pointer)
                 DEAL['type'] = signal
-                DEAL['start_time'] = now.strftime("%d-%m-%Y %H:%M")
-                DEAL['start_price'] = current_price
-                DEAL['target_price'] = round(current_price * 0.987, 3)
+                DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
+                DEAL['start price'] = current_price
                 prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
 
-
         else:
-
             entry_price = position[5]  # enter price
             quantity = position[1]
+
             if open_sl == 'long':
-                stop_price = entry_price * (1 - stop_percent) if STEP_PRICE is None else STEP_PRICE * 0.999
+
+                stop_price = entry_price * (1 - stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
+
                 if current_price < stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), stop_percent, 3, pointer)
-                    profit_array = copy.copy(eth_profit_array)
-                    STEP += 1
-                    profit = round(abs(quantity) * (current_price - entry_price), 3)
-                    if STEP == 1:
-                        STAT['negative'] += 1
-                    DEAL[STEP] = profit
+                    profit = round(abs(quantity) * (current_price - entry_price) - (quantity * current_price * 0.0004), 3)
+                    if profit > 0:
+                        STAT['positive'] += 1
+                    else:
+                        STAT['negative'] -= 1
                     STAT['balance'] += profit
-                    prt(
-                        f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
-                    STEP_PRICE = None
-                    STEP = 0
-                    REMAINDER = 1
-
+                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    STEP_STOP_PRICE = None
                 else:
-                    temp_arr = copy.copy(profit_array)
-                    for j in range(0, len(temp_arr)):
-                        delta = temp_arr[j][0]
-                        contracts = temp_arr[j][1]
-                        if current_price > (entry_price + delta):
-                            # take profit
-                            if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), 3)), stop_percent, 3, pointer)
-                            else:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), 3), stop_percent, 3, pointer)
+                    if entry_price * (1 + stop_percent) < current_price:
+                        if not STEP_STOP_PRICE:
+                            STEP_STOP_PRICE = current_price * (1 - stop_percent)
+                        else:
+                            if current_price * (1 - stop_percent) > STEP_STOP_PRICE:
+                                STEP_STOP_PRICE = current_price * (1 - stop_percent)
 
-
-                            profit = round((max_position * (contracts / 10)) * (current_price - entry_price), 3)
-                            STEP += 1
-                            if STEP == 1:
-                                STAT['positive'] += 1
-                            REMAINDER -= (contracts / 10)
-                            DEAL[STEP] = profit
-                            STAT['balance'] += profit
-                            STEP_PRICE = current_price
-                            prt(f'Закрыл {round((1 - REMAINDER) * 100)}% сделки {open_sl}, шаг {STEP}', pointer)
-                            del profit_array[0]
-                            if len(profit_array) == 0:
-                                STAT['deals'].append(DEAL)
-                                DEAL = {}
-                                STEP_PRICE = None
-                                STEP = 0
-                                REMAINDER = 1
 
             if open_sl == 'short':
-                stop_price = entry_price * (1 + stop_percent) if STEP_PRICE is None else STEP_PRICE * 1.001
+
+                stop_price = entry_price * (1 + stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
+
                 if current_price > stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), stop_percent, 3, pointer)
-                    profit_array = copy.copy(eth_profit_array)
-                    STEP += 1
-                    profit = round(abs(quantity) * (entry_price - current_price), 3)
-                    if STEP == 1:
-                        STAT['negative'] += 1
-                    DEAL[STEP] = profit
+                    profit = round(abs(quantity) * (entry_price - current_price) - (quantity * current_price * 0.0004), 3)
+                    if profit > 0:
+                        STAT['positive'] += 1
+                    else:
+                        STAT['negative'] -= 1
                     STAT['balance'] += profit
-                    prt(
-                        f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, остаток {round(REMAINDER * 100)}% на шаге {STEP}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
-                    STEP_PRICE = None
-                    STEP = 0
-                    REMAINDER = 1
-
+                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    STEP_STOP_PRICE = None
                 else:
-                    temp_arr = copy.copy(profit_array)
-                    for j in range(0, len(temp_arr)):
-                        delta = temp_arr[j][0]
-                        contracts = temp_arr[j][1]
-                        if current_price < (entry_price - delta):
-                            # take profit
-                            if len(profit_array) > 1:
-                                close_position(SYMBOL, open_sl, abs(round(max_position * (contracts/10), 3)), stop_percent, 3, pointer)
-                            else:
-                                close_position(SYMBOL, open_sl, round(abs(quantity), 3), stop_percent, 3, pointer)
-                            profit = round((max_position * (contracts / 10)) * (entry_price - current_price), 3)
-                            STEP += 1
-                            if STEP == 1:
-                                STAT['positive'] += 1
-                            REMAINDER -= (contracts / 10)
-                            DEAL[STEP] = profit
-                            STAT['balance'] += profit
-                            STEP_PRICE = current_price
-                            prt(f'Закрыл {round((1 - REMAINDER) * 100)}% сделки {open_sl}, шаг {STEP}', pointer)
-                            del profit_array[0]
-                            if len(profit_array) == 0:
-                                STAT['deals'].append(DEAL)
-                                DEAL = {}
-                                STEP_PRICE = None
-                                STEP = 0
-                                REMAINDER = 1
+                    if entry_price * (1 - stop_percent) > current_price:
+                        if not STEP_STOP_PRICE:
+                            STEP_STOP_PRICE = current_price * (1 + stop_percent)
+                        else:
+                            if current_price * (1 + stop_percent) < STEP_STOP_PRICE:
+                                STEP_STOP_PRICE = current_price * (1 + stop_percent)
+
     except Exception as e:
         prt(f'Ошибка в main: \n{e}', pointer)
 
