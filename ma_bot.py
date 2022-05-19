@@ -21,6 +21,7 @@ client = Client(KEY, SECRET)
 
 STEP_STOP_PRICE = None
 stop_percent = 0.003
+target_percent = 0.005
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 price = get_symbol_price(SYMBOL)
@@ -67,10 +68,10 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         positive_trend = (df['close'][0] - df['close'][99]) < 0
 
 
-        if prev_delta_sma and cur_delta_sma:
+        if prev_delta_sma and cur_delta_sma and positive_trend:
             signal = 'long'
 
-        if not prev_delta_sma and not cur_delta_sma:
+        if not prev_delta_sma and not cur_delta_sma and negative_trend:
             signal = 'short'
 
         return signal
@@ -132,7 +133,6 @@ def main(step):
             quantity = position[1]
 
             if open_sl == 'long':
-
                 stop_price = entry_price * (1 - stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
 
                 if current_price < stop_price:
@@ -144,10 +144,14 @@ def main(step):
                     else:
                         STAT['negative'] -= 1
                     STAT['balance'] += profit
+                    DEAL['profit'] = profit
+                    DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    STAT['deals'].append(DEAL)
+                    DEAL = {}
                     STEP_STOP_PRICE = None
                 else:
-                    if entry_price * (1 + stop_percent) < current_price:
+                    if entry_price * (1 + target_percent) < current_price:
                         if not STEP_STOP_PRICE:
                             STEP_STOP_PRICE = current_price * (1 - stop_percent)
                         else:
@@ -168,10 +172,14 @@ def main(step):
                     else:
                         STAT['negative'] -= 1
                     STAT['balance'] += profit
+                    DEAL['profit'] = profit
+                    DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    STAT['deals'].append(DEAL)
+                    DEAL = {}
                     STEP_STOP_PRICE = None
                 else:
-                    if entry_price * (1 - stop_percent) > current_price:
+                    if entry_price * (1 - target_percent) > current_price:
                         if not STEP_STOP_PRICE:
                             STEP_STOP_PRICE = current_price * (1 + stop_percent)
                         else:
