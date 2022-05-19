@@ -22,8 +22,8 @@ TAAPI = os.getenv("TAAPI")
 
 STEP_STOP_PRICE = None
 stop_percent = 0.003
-target_percent = 0.008
-start_stop_percent = 0.008
+target_percent = 0.006
+start_stop_percent = 0.006
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 price = get_symbol_price(SYMBOL)
