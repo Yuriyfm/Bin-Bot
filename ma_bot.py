@@ -53,8 +53,8 @@ def get_futures_klines(symbol, limit, pointer):
 def PrepareDF(DF):
     df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
     df.columns = ["date", "open", "high", "low", "close", "volume"]
-    df['EMA_2'] = df['close'].ewm(span=7).mean()
-    df['EMA_5'] = df['close'].ewm(span=21).mean()
+    df['EMA_2'] = df['close'].ewm(span=2).mean()
+    df['EMA_5'] = df['close'].ewm(span=5).mean()
     # df['SMA_2'] = df['close'].rolling(window=2).mean()
     # df['SMA_5'] = df['close'].rolling(window=5).mean()
     df = df.set_index('date')
@@ -111,7 +111,7 @@ def main(step):
     if step == 1:
         prt(f'\nПлюсовых: {STAT["positive"]} '
             f'\nМинусовых: {STAT["negative"]} '
-            f'\nprofit USD: {round(STAT["balance"], 2)}, '
+            f'\nprofit %: {round(STAT["balance"], 2)}, '
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущий курс: {current_price}'
             f'\nТекущая сделка: {DEAL}'
@@ -135,8 +135,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
-
+                prt(f'Открыл {signal} на {max_position}$, по курсу {current_price}', pointer)
 
             elif signal == 'short':
                 balance = get_wallet_balance()
@@ -146,7 +145,7 @@ def main(step):
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                prt(f'Открыл {signal} на {max_position} {SYMBOL}, по курсу {current_price}', pointer)
+                prt(f'Открыл {signal} на {max_position}$, по курсу {current_price}', pointer)
 
         else:
             entry_price = position[5]  # enter price
@@ -158,15 +157,15 @@ def main(step):
                 if current_price < stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), start_stop_percent, 3, pointer)
-                    profit = round(abs(quantity) * (current_price - entry_price) - (quantity * current_price * 0.0004), 3)
+                    profit = round(((current_price / entry_price - 1) * 100) - 0.04, 3)
                     if profit > 0:
                         STAT['positive'] += 1
                     else:
-                        STAT['negative'] -= 1
+                        STAT['negative'] += 1
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    prt(f'Завершил сделку {open_sl} с результатом {profit}%', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
@@ -178,23 +177,20 @@ def main(step):
                             if current_price * (1 - stop_percent) > STEP_STOP_PRICE:
                                 STEP_STOP_PRICE = current_price * (1 - stop_percent)
 
-
             if open_sl == 'short':
-
                 stop_price = entry_price * (1 + start_stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
-
                 if current_price > stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), start_stop_percent, 3, pointer)
-                    profit = round(abs(quantity) * (entry_price - current_price) - (quantity * current_price * 0.0004), 3)
+                    profit = round(((current_price / entry_price - 1) * -100) - 0.04, 3)
                     if profit > 0:
                         STAT['positive'] += 1
                     else:
-                        STAT['negative'] -= 1
+                        STAT['negative'] += 1
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} {abs(quantity)} {SYMBOL}, profit={profit}', pointer)
+                    prt(f'Завершил сделку {open_sl} с результатом {profit}%', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
