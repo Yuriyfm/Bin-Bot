@@ -3,7 +3,8 @@ from pathlib import Path
 import pandas as pd
 import os
 import requests
-from datetime import datetime
+import matplotlib.pyplot as plt
+from calc_psar import PSAR
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -35,6 +36,22 @@ def get_rsi(df):
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
+
+
+
+def get_sar(df):
+    indic = PSAR()
+    df['PSAR'] = df.apply(
+        lambda x: indic.calcPSAR(x['high'], x['low']), axis=1)
+    # Add supporting data
+    df['EP'] = indic.ep_list
+    df['Trend'] = indic.trend_list
+    df['AF'] = indic.af_list
+    df.head()
+    return df
+
+
+
 df = get_futures_klines(SYMBOL, 100)
-res = get_rsi(df)
-print(res)
+df['ema7'] = df['close'].ewm(span=7).mean()
+print(df)

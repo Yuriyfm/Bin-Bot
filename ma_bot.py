@@ -27,6 +27,7 @@ start_stop_percent = 0.006
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 price = get_symbol_price(SYMBOL)
+cur_PSAR = None
 
 DEAL = {}
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
@@ -52,8 +53,10 @@ def get_futures_klines(symbol, limit, pointer):
 def PrepareDF(DF):
     df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
     df.columns = ["date", "open", "high", "low", "close", "volume"]
-    df['SMA_2'] = df['close'].rolling(window=2).mean()
-    df['SMA_5'] = df['close'].rolling(window=5).mean()
+    df['EMA_2'] = df['close'].ewm(span=7).mean()
+    df['EMA_5'] = df['close'].ewm(span=21).mean()
+    # df['SMA_2'] = df['close'].rolling(window=2).mean()
+    # df['SMA_5'] = df['close'].rolling(window=5).mean()
     df = df.set_index('date')
     df = df.reset_index()
     return df
@@ -66,7 +69,7 @@ def get_rsi(df):
     ema_up = up.ewm(com=14, adjust=False).mean()
     ema_down = down.ewm(com=14, adjust=False).mean()
     rs = ema_up / ema_down
-    df['rsi'] = 100 - (100 / (1 + rs))
+    df['RSI'] = 100 - (100 / (1 + rs))
     return df
 
 
@@ -76,22 +79,20 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         df = PrepareDF(ohlc)
         df = get_rsi(df)
         signal = ""  # return value
-        prev_delta_sma = df['SMA_2'][98] < df['SMA_5'][98]
-        cur_delta_sma = df['SMA_2'][99] > df['SMA_5'][99]
+        prev_delta_ema = df['EMA_2'][98] < df['EMA_5'][98]
+        cur_delta_ema = df['EMA_2'][99] > df['EMA_5'][99]
 
-        if prev_delta_sma and cur_delta_sma:
-            for i in range(5):
-                rsi_long = df['rsi'][98 - i] < 30 < df['rsi'][99 - i]
-                if rsi_long:
-                    signal = 'long'
-                    break
+        if prev_delta_ema and cur_delta_ema:
+            if df['RSI'][98] < 50 > df['RSI'][99]:
+                signal = 'long'
+            elif df['RSI'][97] < 30 > df['RSI'][99]:
+                signal = 'long'
 
-        if not prev_delta_sma and not cur_delta_sma:
-            for i in range(5):
-                rsi_short = df['rsi'][98 - i] > 70 > df['rsi'][99 - i]
-                if rsi_short:
-                    signal = 'short'
-                    break
+        if not prev_delta_ema and not cur_delta_ema:
+            if df['RSI'][98] > 50 < df['RSI'][99]:
+                signal = 'short'
+            elif df['RSI'][97] > 70 < df['RSI'][99]:
+                signal = 'short'
 
         return signal
     except Exception as e:
