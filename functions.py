@@ -55,21 +55,20 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         df = get_ema(df)
         df = get_rsi(df)
         signal = ""  # return value
-        prev_delta_ema = df['EMA_2'][98] < df['EMA_5'][98]
-        cur_delta_ema = df['EMA_2'][99] > df['EMA_5'][99]
+        prev_delta_ema = df['EMA_2'][97] < df['EMA_5'][97]
+        cur_delta_ema = df['EMA_2'][98] > df['EMA_5'][98]
 
         if prev_delta_ema and cur_delta_ema:
-            if df['RSI'][98] < 50 > df['RSI'][99]:
+            if df['RSI'][97] < 50 > df['RSI'][98]:
                 signal = 'long'
-            elif df['RSI'][97] < 30 > df['RSI'][99]:
+            elif df['RSI'][96] < 30 > df['RSI'][98]:
                 signal = 'long'
 
         if not prev_delta_ema and not cur_delta_ema:
-            if df['RSI'][98] > 50 < df['RSI'][99]:
+            if df['RSI'][97] > 50 < df['RSI'][98]:
                 signal = 'short'
-            elif df['RSI'][97] > 70 < df['RSI'][99]:
+            elif df['RSI'][96] > 70 < df['RSI'][98]:
                 signal = 'short'
-
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
