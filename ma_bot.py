@@ -85,7 +85,7 @@ def main(step):
                 atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
                 stop_price = entry_price * (1 - atr_stop_percent * 0.5) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
                 if step % 60 == 0:
-                    prt(f'short current stop price: {stop_price}', pointer)
+                    prt(f'long current stop price: {stop_price}', pointer)
                 if current_price < stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * 0.5,  pointer)
@@ -113,7 +113,7 @@ def main(step):
                 atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
                 stop_price = entry_price * (1 + atr_stop_percent * 0.5) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
                 if step % 60 == 0:
-                    prt(f'long current stop price: {stop_price}', pointer)
+                    prt(f'short current stop price: {stop_price}', pointer)
                 if current_price > stop_price:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * 0.5,  pointer)
