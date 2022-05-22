@@ -1,14 +1,11 @@
 from dotenv import load_dotenv
 from pathlib import Path
-import pandas as pd
-import copy
 import time
 import datetime
 import random
 import os
-import requests
 from functions import get_symbol_price, get_wallet_balance, open_position, close_position, \
-    get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt
+    get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt, check_if_signal, get_current_atr
 from binance import Client
 
 load_dotenv()
@@ -18,87 +15,15 @@ KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
-TAAPI = os.getenv("TAAPI")
 
 STEP_STOP_PRICE = None
-stop_percent = 0.003
-target_percent = 0.006
-start_stop_percent = 0.006
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 price = get_symbol_price(SYMBOL)
-cur_PSAR = None
+
 
 DEAL = {}
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
-
-
-def get_futures_klines(symbol, limit, pointer):
-    try:
-        x = requests.get(
-            'https://www.binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=1m')
-        df = pd.DataFrame(x.json())
-        df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
-        df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
-        df['open'] = df['open'].astype(float)
-        df['high'] = df['high'].astype(float)
-        df['low'] = df['low'].astype(float)
-        df['close'] = df['close'].astype(float)
-        df['volume'] = df['volume'].astype(float)
-        return df
-    except Exception as e:
-        prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
-
-
-def PrepareDF(DF):
-    df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
-    df.columns = ["date", "open", "high", "low", "close", "volume"]
-    df['EMA_2'] = df['close'].ewm(span=2).mean()
-    df['EMA_5'] = df['close'].ewm(span=5).mean()
-    # df['SMA_2'] = df['close'].rolling(window=2).mean()
-    # df['SMA_5'] = df['close'].rolling(window=5).mean()
-    df = df.set_index('date')
-    df = df.reset_index()
-    return df
-
-
-def get_rsi(df):
-    delta = df['close'].diff()
-    up = delta.clip(lower=0)
-    down = -1 * delta.clip(upper=0)
-    ema_up = up.ewm(com=14, adjust=False).mean()
-    ema_down = down.ewm(com=14, adjust=False).mean()
-    rs = ema_up / ema_down
-    df['RSI'] = 100 - (100 / (1 + rs))
-    return df
-
-
-def check_if_signal(SYMBOL,  pointer, KLINES):
-    try:
-        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
-        df = PrepareDF(ohlc)
-        df = get_rsi(df)
-        signal = ""  # return value
-        prev_delta_ema = df['EMA_2'][98] < df['EMA_5'][98]
-        cur_delta_ema = df['EMA_2'][99] > df['EMA_5'][99]
-
-        if prev_delta_ema and cur_delta_ema:
-            if df['RSI'][98] < 50 > df['RSI'][99]:
-                signal = 'long'
-            elif df['RSI'][97] < 30 > df['RSI'][99]:
-                signal = 'long'
-
-        if not prev_delta_ema and not cur_delta_ema:
-            if df['RSI'][98] > 50 < df['RSI'][99]:
-                signal = 'short'
-            elif df['RSI'][97] > 70 < df['RSI'][99]:
-                signal = 'short'
-
-        return signal
-    except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
-
-
 
 def main(step):
     global STEP_STOP_PRICE
@@ -107,6 +32,7 @@ def main(step):
     global max_position
 
     current_price = get_symbol_price(SYMBOL)
+
 
     if step == 1:
         prt(f'\nПлюсовых: {STAT["positive"]} '
@@ -119,7 +45,7 @@ def main(step):
             + str(STAT['deals']), pointer)
 
     try:
-        getTPSLfrom_telegram(SYMBOL, start_stop_percent, pointer)
+        getTPSLfrom_telegram(SYMBOL)
         position = get_opened_positions(SYMBOL, pointer)
         open_sl = position[0]
         if open_sl == "":  # no position
@@ -127,36 +53,42 @@ def main(step):
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, KLINES)
 
+
             if signal == 'long':
+                atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.2 / price, 3)
                 now = datetime.datetime.now()
-                open_position(SYMBOL, signal, max_position, start_stop_percent, 3, pointer)
+                open_position(SYMBOL, signal, max_position, atr_stop_percent * 0.5, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                prt(f'Открыл {signal} на {max_position}$, по курсу {current_price}', pointer)
+                prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, 2)}$, по курсу {current_price}', pointer)
 
             elif signal == 'short':
+                atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.2 / price, 3)
                 now = datetime.datetime.now()
-                open_position(SYMBOL, signal, max_position, start_stop_percent, 3, pointer)
+                open_position(SYMBOL, signal, max_position, atr_stop_percent * 0.5, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                prt(f'Открыл {signal} на {max_position}$, по курсу {current_price}', pointer)
+                prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, 2)}$, по курсу {current_price}', pointer)
 
         else:
             entry_price = position[5]  # enter price
             quantity = position[1]
 
-            if open_sl == 'long':
-                stop_price = entry_price * (1 - start_stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
 
+            if open_sl == 'long':
+                atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
+                stop_price = entry_price * (1 - atr_stop_percent * 0.5) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
+                if step % 60 == 0:
+                    prt(f'short current stop price: {stop_price}', pointer)
                 if current_price < stop_price:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), start_stop_percent, 3, pointer)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * 0.5,  pointer)
                     profit = round(((current_price / entry_price - 1) * 100) - 0.04, 3)
                     if profit > 0:
                         STAT['positive'] += 1
@@ -170,18 +102,21 @@ def main(step):
                     DEAL = {}
                     STEP_STOP_PRICE = None
                 else:
-                    if entry_price * (1 + target_percent) < current_price:
+                    if entry_price * (1 + atr_stop_percent * 0.5) < current_price:
                         if not STEP_STOP_PRICE:
-                            STEP_STOP_PRICE = current_price * (1 - stop_percent)
+                            STEP_STOP_PRICE = current_price * (1 - atr_stop_percent * 0.3)
                         else:
-                            if current_price * (1 - stop_percent) > STEP_STOP_PRICE:
-                                STEP_STOP_PRICE = current_price * (1 - stop_percent)
+                            if current_price * (1 - atr_stop_percent * 0.3) > STEP_STOP_PRICE:
+                                STEP_STOP_PRICE = current_price * (1 - atr_stop_percent * 0.3)
 
             if open_sl == 'short':
-                stop_price = entry_price * (1 + start_stop_percent) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
+                atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
+                stop_price = entry_price * (1 + atr_stop_percent * 0.5) if STEP_STOP_PRICE is None else STEP_STOP_PRICE
+                if step % 60 == 0:
+                    prt(f'long current stop price: {stop_price}', pointer)
                 if current_price > stop_price:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), start_stop_percent, 3, pointer)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * 0.5,  pointer)
                     profit = round(((current_price / entry_price - 1) * -100) - 0.04, 3)
                     if profit > 0:
                         STAT['positive'] += 1
@@ -195,12 +130,12 @@ def main(step):
                     DEAL = {}
                     STEP_STOP_PRICE = None
                 else:
-                    if entry_price * (1 - target_percent) > current_price:
+                    if entry_price * (1 - atr_stop_percent * 0.5) > current_price:
                         if not STEP_STOP_PRICE:
-                            STEP_STOP_PRICE = current_price * (1 + stop_percent)
+                            STEP_STOP_PRICE = current_price * (1 + atr_stop_percent * 0.3)
                         else:
-                            if current_price * (1 + stop_percent) < STEP_STOP_PRICE:
-                                STEP_STOP_PRICE = current_price * (1 + stop_percent)
+                            if current_price * (1 + atr_stop_percent * 0.3) < STEP_STOP_PRICE:
+                                STEP_STOP_PRICE = current_price * (1 + atr_stop_percent * 0.3)
 
     except Exception as e:
         prt(f'Ошибка в main: \n{e}', pointer)

@@ -1,14 +1,12 @@
 import requests
-import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 import time
 from dotenv import load_dotenv
 from pathlib import Path
 import os
-
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from futures_sign import send_signed_request, send_public_request
+from indicators import get_atr, get_slope, get_rsi, get_ema
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -33,12 +31,10 @@ def get_wallet_balance():
 
 
 # функция запрашивает с площадки последние 500 свечей по пять минут и возвращает датафрейм с нужными столбцами
-
 def get_futures_klines(symbol, limit, pointer):
     try:
         x = requests.get(
-            'https://www.binance.com/fapi/v1/klines?symbol=' + symbol + '&limit=' + str(limit) + '&interval=5m')
-        json_klines = x.json()
+            f'https://www.binance.com/fapi/v1/klines?symbol={symbol}&limit={limit}&interval=1m')
         df = pd.DataFrame(x.json())
         df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
         df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
@@ -52,11 +48,37 @@ def get_futures_klines(symbol, limit, pointer):
         prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
+def check_if_signal(SYMBOL,  pointer, KLINES):
+    try:
+        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
+        df = PrepareDF(ohlc)
+        df = get_ema(df)
+        df = get_rsi(df)
+        signal = ""  # return value
+        prev_delta_ema = df['EMA_2'][98] < df['EMA_5'][98]
+        cur_delta_ema = df['EMA_2'][99] > df['EMA_5'][99]
+
+        if prev_delta_ema and cur_delta_ema:
+            if df['RSI'][98] < 50 > df['RSI'][99]:
+                signal = 'long'
+            elif df['RSI'][97] < 30 > df['RSI'][99]:
+                signal = 'long'
+
+        if not prev_delta_ema and not cur_delta_ema:
+            if df['RSI'][98] > 50 < df['RSI'][99]:
+                signal = 'short'
+            elif df['RSI'][97] > 70 < df['RSI'][99]:
+                signal = 'short'
+
+        return signal
+    except Exception as e:
+        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
+
+
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
 # собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
 # close_price - берет текущую цену + 1%. Зачем нужен?
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
-
 def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
     try:
         sprice = get_symbol_price(symbol)
@@ -103,7 +125,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
 # собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
-def close_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
+def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
     try:
         sprice = get_symbol_price(symbol)
 
@@ -158,143 +180,27 @@ def get_opened_positions(symbol, pointer):
 
 
 # Close all orders
-
 def check_and_close_orders(symbol):
     a = client.futures_get_open_orders(symbol=symbol)
     if len(a) > 0:
         client.futures_cancel_all_open_orders(symbol=symbol)
 
 
-# INDICATORS
-
-
-# функция принимает итоговые значения свечей и количество свечей по которым будет считать угол наклона
-def indSlope(series, n):
-    array_sl = [j * 0 for j in range(n - 1)]
-
-    for j in range(n, len(series) + 1):
-        y = series[j - n:j]  # итоговые значения первых n свечей
-        x = np.array(range(n))  # массив [1, 2, 3, ... n-1]
-        x_sc = (x - x.min()) / (x.max() - x.min())
-        y_sc = (y - y.min()) / (y.max() - y.min())
-        x_sc = sm.add_constant(x_sc)
-        model = sm.OLS(y_sc, x_sc)
-        results = model.fit()
-        array_sl.append(results.params[-1])
-    slope_angle = (np.rad2deg(np.arctan(np.array(array_sl))))
-    return np.array(slope_angle)
-
-
-# True Range and Average True Range indicator
-# функция получает на вход df с данными последних n свечек, и считает TR и ATR
-# TR - истинный диапазон, ATR - средний истинный диапазон, инфо - https://bcs-express.ru/novosti-i-analitika/indikator-average-true-range-opredeliaem-volatil-nost
-# ATR находится на низких значениях, когда на рынке затишье и формируется боковик. После продолжительного боковика
-# можно ожидать появление мощного тренда (нисходящего или восходящего). Тогда индикатор начинает расти, свидетельствуя о росте волатильности.
-def indATR(source_DF, n):
-    df = source_DF.copy()
-    df['H-L'] = abs(df['high'] - df['low'])
-    df['H-PC'] = abs(df['high'] - df['close'].shift(1))
-    df['L-PC'] = abs(df['low'] - df['close'].shift(1))
-    df['TR'] = df[['H-L', 'H-PC', 'L-PC']].max(axis=1, skipna=False)
-    df['ATR'] = df['TR'].rolling(n).mean()
-    df_temp = df.drop(['H-L', 'H-PC', 'L-PC'], axis=1)
-    return df_temp
-
-
-# find local mimimum / local maximum
-
-def isLCC(DF, i):
-    df = DF.copy()
-    LCC = 0
-    if df['close'][i - 1] >= df['close'][i] <= df['close'][i + 1] and df['close'][i + 1] > df['close'][i - 1]:
-        # найдено Дно
-        LCC = i - 1
-    return LCC
-
-
-def isHCC(DF, i):
-    df = DF.copy()
-    HCC = 0
-    if df['close'][i - 1] <= df['close'][i] >= df['close'][i + 1] and df['close'][i + 1] < df['close'][i - 1]:
-        # найдена вершина
-        HCC = i
-    return HCC
-
-
-def getMaxMinChannel(DF, n):
-    maxx = 0
-    minn = DF['low'].max()
-    for i in range(1, n):
-        if maxx < DF['high'][len(DF) - i]:
-            maxx = DF['high'][len(DF) - i]
-        if minn > DF['low'][len(DF) - i]:
-            minn = DF['low'][len(DF) - i]
-    return maxx, minn
-
-
 # generate data frame with all needed data
-
 def PrepareDF(DF):
-    ohlc = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
-    ohlc.columns = ["date", "open", "high", "low", "close", "volume"]
-    ohlc = ohlc.set_index('date')
-    df = indATR(ohlc, 14).reset_index()  # считаем ATR по последним 14 свечам
-    df['slope'] = indSlope(df['close'], 5)  # считаем угол наклона
-    df['channel_max'] = df['high'].rolling(10).max()  # считаем верхнюю границу канала
-    df['channel_min'] = df['low'].rolling(10).min()  # считаем нижнюю границу канала
-    df['position_in_channel'] = (df['close'] - df['channel_min']) / (
-            df['channel_max'] - df['channel_min'])  # считаем позицию в канале
+    df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
+    df.columns = ["date", "open", "high", "low", "close", "volume"]
     df = df.set_index('date')
     df = df.reset_index()
     return df
 
 
-# функция проверяет локальный минимум/максимум, близость к краю канала и текущий угол наклона тренда и возвращает
-# long, short или ''
-def check_if_signal(SYMBOL,  pointer, SLOPE_S, SLOPE_L, SL_X_L, SL_X_S, SL_X_KLINE_L, SL_X_KLINE_S,
-                    POS_IN_CHANNEL_S, POS_IN_CHANNEL_L, SL_X_L_2, SL_X_S_2, SL_X_KLINE_S_2, SL_X_KLINE_L_2, KLINES):
-    try:
-        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
-        prepared_df = PrepareDF(ohlc)
-        signal = ""  # return value
-        i = KLINES - 2  # 99 - текущая незакрытая свечка, 98 - последняя закрытая свечка, нужно проверить 97-ю росла она или падала
-
-        atr = prepared_df['ATR'][i - 1]
-
-        mean_slope_l = prepared_df[KLINES - 1 - SL_X_KLINE_L:KLINES - 1]['slope'].mean()
-        mean_slope_l_2 = prepared_df[KLINES - 1 - SL_X_KLINE_L_2:KLINES - 1]['slope'].mean()
-        mean_slope_s_2 = prepared_df[KLINES - 1 - SL_X_KLINE_S_2:KLINES - 1]['slope'].mean()
-        mean_slope_s = prepared_df[KLINES - 1 - SL_X_KLINE_S:KLINES - 1]['slope'].mean()
-
-        if mean_slope_l > SL_X_L and mean_slope_l_2 < SL_X_L_2:
-            if isLCC(prepared_df, i - 1) > 0:
-                # found bottom - OPEN LONG
-                if prepared_df["position_in_channel"][i - 1] < POS_IN_CHANNEL_L:
-                    # close to top of channel
-                    if prepared_df["slope"][i - 1] < SLOPE_L:
-                        # found a good enter point for LONG
-                        signal = 'long'
-                        prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
-                            f'mean slope l({round(SL_X_KLINE_L, 3)}kl): {round(mean_slope_l, 3)}, '
-                            f'mean slope l 2({round(SL_X_KLINE_L_2, 3)}kl): {round(mean_slope_l_2, 3)}, '
-                            f'POS: {round(prepared_df["position_in_channel"][i - 1], 3)}, ', pointer)
-
-        if mean_slope_s < SL_X_S and mean_slope_s_2 > SL_X_S_2:
-            if isHCC(prepared_df, i - 1) > 0:
-                # found top - OPEN SHORT
-                if prepared_df['position_in_channel'][i - 1] > POS_IN_CHANNEL_S:
-                    # close to top of channel
-                    if prepared_df["slope"][i - 1] > SLOPE_S:
-                        # found a good enter point for SHORT
-                        signal = 'short'
-                        prt(f'ATR: {round(atr, 3)}, slope l: {round(prepared_df["slope"][i - 1], 3)}, '
-                            f'mean slope s({round(SL_X_KLINE_S, 3)}kl): {round(mean_slope_s, 3)}, '
-                            f'mean slope s 2({round(SL_X_KLINE_S_2, 3)}kl): {round(mean_slope_s_2, 3)}, '
-                            f'POS: {round(prepared_df["position_in_channel"][i - 1], 3)}, ', pointer)
-
-        return signal
-    except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
+def get_current_atr(symbol, pointer):
+    df = get_futures_klines(symbol, 15, pointer)
+    df = PrepareDF(df)
+    df = get_atr(df, 14)
+    cur_atr = df['ATR'][14]
+    return cur_atr
 
 
 telegram_delay = 12
@@ -302,7 +208,7 @@ bot_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("CHAT_ID")
 
 
-def getTPSLfrom_telegram(SYMBOL, stop_percent, pointer):
+def getTPSLfrom_telegram(pointer):
     try:
         strr = 'https://api.telegram.org/bot' + bot_token + '/getUpdates'
         response = requests.get(strr)
@@ -322,12 +228,12 @@ def getTPSLfrom_telegram(SYMBOL, stop_percent, pointer):
                     exit()
                 if 'hello' in textt:
                     telegram_bot_sendtext('Hello. How are you?')
-                if 'close_pos' in textt:
-                    position = get_opened_positions(SYMBOL, pointer)
-                    open_sl = position[0]
-                    quantity = position[1]
-                    close_position(SYMBOL, open_sl, abs(quantity), stop_percent, 3, pointer)
-                    prt('Позиция закрыта в ручном режиме', pointer)
+                # if 'close_pos' in textt:
+                #     position = get_opened_positions(SYMBOL, pointer)
+                #     open_sl = position[0]
+                #     quantity = position[1]
+                #     close_position(SYMBOL, open_sl, abs(quantity), stop_percent, 3, pointer)
+                #     prt('Позиция закрыта в ручном режиме', pointer)
     except Exception as e:
         print(f'Ошибка подключения к телеграм: \n{e}')
 
