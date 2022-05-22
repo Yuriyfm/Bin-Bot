@@ -99,7 +99,7 @@ def main(step):
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}%', pointer)
+                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
@@ -121,7 +121,7 @@ def main(step):
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}%', pointer)
+                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
