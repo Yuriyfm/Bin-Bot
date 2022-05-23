@@ -69,6 +69,10 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
                 signal = 'short'
             elif df['RSI'][96] > 70 < df['RSI'][98]:
                 signal = 'short'
+        if signal != '':
+            prt(f"\nEMA_2[97]: {df['EMA_2'][97]}, EMA_5[97]:{df['EMA_5'][97]}"
+                f"\nEMA_2[98]: {df['EMA_2'][98]}, EMA_5[98]:{df['EMA_5'][98]}"
+                f"\nRSI[97]: {df['RSI'][97]}, RSI[98]: {df['RSI'][98]}", pointer)
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
