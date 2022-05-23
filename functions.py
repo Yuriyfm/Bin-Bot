@@ -60,13 +60,13 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         cur_delta_ema = df['EMA_2'][98] > df['EMA_5'][98]
         cur_atr = df['ATR'][98]
 
-        if prev_delta_ema and cur_delta_ema and 3.5 > cur_atr > 1.5:
+        if prev_delta_ema and cur_delta_ema and 4 > cur_atr > 2:
             if df['RSI'][97] < 50 < df['RSI'][98]:
                 signal = 'long'
             elif df['RSI'][96] < 30 < df['RSI'][98]:
                 signal = 'long'
 
-        if not prev_delta_ema and not cur_delta_ema and 3.5 > cur_atr > 1.5:
+        if not prev_delta_ema and not cur_delta_ema and 4 > cur_atr > 2:
             if df['RSI'][97] > 50 > df['RSI'][98]:
                 signal = 'short'
             elif df['RSI'][96] > 70 > df['RSI'][98]:
