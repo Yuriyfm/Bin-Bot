@@ -88,7 +88,8 @@ def main(step):
                     STOP_PRICE = current_price * (1 - atr_stop_percent * ATR_RATE)
                 if step % 60 == 0:
                     prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                        f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}', pointer)
+                        f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
+                        f'\nATR: {atr_stop_percent * 100}', pointer)
                 if current_price < STOP_PRICE:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
@@ -110,7 +111,8 @@ def main(step):
                     STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
                 if step % 60 == 0:
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                        f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, 2)}', pointer)
+                        f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, 2)}'
+                        f'\nATR: {atr_stop_percent * 100}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
