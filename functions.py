@@ -48,7 +48,7 @@ def get_futures_klines(symbol, limit, pointer):
         prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
-def check_if_signal(SYMBOL,  pointer, KLINES):
+def check_if_signal(SYMBOL, pointer, KLINES):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         df = PrepareDF(ohlc)
@@ -61,20 +61,16 @@ def check_if_signal(SYMBOL,  pointer, KLINES):
         cur_atr = df['ATR'][98]
 
         if prev_delta_ema and cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][97] < 50 < df['RSI'][98]:
-                signal = 'long'
-            elif df['RSI'][96] < 30 < df['RSI'][98]:
+            if df['RSI'][97] < 50 < df['RSI'][98] or df['RSI'][96] < 30 < df['RSI'][98]:
                 signal = 'long'
 
         if not prev_delta_ema and not cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][97] > 50 > df['RSI'][98]:
-                signal = 'short'
-            elif df['RSI'][96] > 70 > df['RSI'][98]:
+            if df['RSI'][97] > 50 > df['RSI'][98] or df['RSI'][96] > 70 > df['RSI'][98]:
                 signal = 'short'
         if signal != '':
-            prt(f"\nEMA2[97]: {df['EMA_2'][97]}, EMA5[97]:{df['EMA_5'][97]}"
-                f"\nEMA2[98]: {df['EMA_2'][98]}, EMA5[98]:{df['EMA_5'][98]}"
-                f"\nRSI[97]: {df['RSI'][97]}, RSI[98]: {df['RSI'][97]}", pointer)
+            prt(f"\nEMA2 97: {df['EMA_2'][97]}, EMA5 97: {df['EMA_5'][97]}"
+                f"\nEMA2 98: {df['EMA_2'][98]}, EMA5 98: {df['EMA_5'][98]}"
+                f"\nRSI 97: {df['RSI'][97]}, RSI 98: {df['RSI'][98]}", pointer)
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
