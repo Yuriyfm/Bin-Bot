@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from futures_sign import send_signed_request, send_public_request
-from indicators import get_atr, get_slope, get_rsi, get_ema
+from indicators import get_atr, get_slope, get_rsi, get_ema, get_bollinger_bands
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -52,26 +52,21 @@ def check_if_signal(SYMBOL, pointer, KLINES):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         df = PrepareDF(ohlc)
-        df = get_ema(df)
         df = get_rsi(df)
         df = get_atr(df, 14)
+        df = get_bollinger_bands(df)
         signal = ""  # return value
-        prev_delta_ema = df['EMA_3'][97] < df['EMA_7'][97]
-        cur_delta_ema = df['EMA_3'][98] > df['EMA_7'][98]
         cur_atr = df['ATR'][98]
 
-        if prev_delta_ema and cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][96] < 30 < df['RSI'][98]:
-                signal = 'long'
+        if df['lower_band'][97] > df['close'][97] and df['RSI'][96] < 30 < df['RSI'][98] and 4 > cur_atr > 2:
+            signal = 'long'
 
-        if not prev_delta_ema and not cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][96] > 70 > df['RSI'][98]:
-                signal = 'short'
+        if df['upper_band'][97] < df['close'][97] and df['RSI'][96] > 70 > df['RSI'][98] and 4 > cur_atr > 2:
+            signal = 'short'
 
         if signal != '':
-            prt(f"\nEMA3 97: {round(df['EMA_3'][97], 3)}, EMA7 97: {round(df['EMA_7'][97], 3)}"
-                f"\nEMA3 98: {round(df['EMA_3'][98])}, EMA7 98: {round(df['EMA_7'][98])}"
-                f"\nRSI 97: {round(df['RSI'][96])}, RSI 98: {round(df['RSI'][98])}", pointer)
+            prt(f"\nupper band 97: {round(df['upper_band'][97], 3)} \nlower band 97: {round(df['lower_band'][97], 3)}"
+                f"\nRSI 96: {round(df['RSI'][96], 3)} \nRSI 98: {round(df['RSI'][98], 3)}", pointer)
 
         return signal
     except Exception as e:

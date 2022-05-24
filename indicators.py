@@ -59,3 +59,11 @@ def getMaxMinChannel(DF, n):
         if minn > DF['low'][len(DF) - i]:
             minn = DF['low'][len(DF) - i]
     return maxx, minn
+
+
+def get_bollinger_bands(df):
+    sma20 = df['close'].rolling(window=20).mean()
+    rstd = df['close'].rolling(window=20).std()
+    df['upper_band'] = sma20 + 2 * rstd
+    df['lower_band'] = sma20 - 2 * rstd
+    return df
