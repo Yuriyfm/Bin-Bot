@@ -68,7 +68,7 @@ def check_if_signal(SYMBOL, pointer, KLINES):
             if df['RSI'][96] > 70 > df['RSI'][98]:
                 signal = 'short'
 
-        if signal == '':
+        if signal != '':
             prt(f"\nEMA3 97: {round(df['EMA_3'][97], 3)}, EMA7 97: {round(df['EMA_7'][97], 3)}"
                 f"\nEMA3 98: {round(df['EMA_3'][98])}, EMA7 98: {round(df['EMA_7'][98])}"
                 f"\nRSI 97: {round(df['RSI'][96])}, RSI 98: {round(df['RSI'][98])}", pointer)
