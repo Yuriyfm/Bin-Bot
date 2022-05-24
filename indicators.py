@@ -14,8 +14,8 @@ def get_rsi(df):
 
 
 def get_ema(df):
-    df['EMA_2'] = df['close'].ewm(span=2).mean()
-    df['EMA_5'] = df['close'].ewm(span=5).mean()
+    df['EMA_3'] = df['close'].ewm(span=3).mean()
+    df['EMA_7'] = df['close'].ewm(span=7).mean()
     return df
 
 

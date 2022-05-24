@@ -56,21 +56,21 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = get_rsi(df)
         df = get_atr(df, 14)
         signal = ""  # return value
-        prev_delta_ema = df['EMA_2'][97] < df['EMA_5'][97]
-        cur_delta_ema = df['EMA_2'][98] > df['EMA_5'][98]
+        prev_delta_ema = df['EMA_3'][97] < df['EMA_7'][97]
+        cur_delta_ema = df['EMA_3'][98] > df['EMA_7'][98]
         cur_atr = df['ATR'][98]
 
         if prev_delta_ema and cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][97] < 50 < df['RSI'][98] or df['RSI'][96] < 30 < df['RSI'][98]:
+            if df['RSI'][96] < 30 < df['RSI'][98]:
                 signal = 'long'
 
         if not prev_delta_ema and not cur_delta_ema and 4 > cur_atr > 2:
-            if df['RSI'][97] > 50 > df['RSI'][98] or df['RSI'][96] > 70 > df['RSI'][98]:
+            if df['RSI'][96] > 70 > df['RSI'][98]:
                 signal = 'short'
-        if signal != '':
-            prt(f"\nEMA2 97: {df['EMA_2'][97]}, EMA5 97: {df['EMA_5'][97]}"
-                f"\nEMA2 98: {df['EMA_2'][98]}, EMA5 98: {df['EMA_5'][98]}"
-                f"\nRSI 97: {df['RSI'][97]}, RSI 98: {df['RSI'][98]}", pointer)
+            prt(f"\nEMA3 97: {round(df['EMA_3'][97], 3)}, EMA7 97: {round(df['EMA_7'][97], 3)}"
+                f"\nEMA3 98: {round(df['EMA_3'][98])}, EMA7 98: {round(df['EMA_7'][98])}"
+                f"\nRSI 97: {round(df['RSI'][96])}, RSI 98: {round(df['RSI'][98])}", pointer)
+
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
