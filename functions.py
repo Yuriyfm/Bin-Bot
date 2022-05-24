@@ -58,15 +58,18 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         signal = ""  # return value
         cur_atr = df['ATR'][98]
 
-        if df['lower_band'][97] > df['close'][97] and df['RSI'][96] < 30 < df['RSI'][98] and 6 > cur_atr > 2:
+        if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32 \
+                and cur_atr > 2:
             signal = 'long'
 
-        if df['upper_band'][97] < df['close'][97] and df['RSI'][96] > 70 > df['RSI'][98] and 6 > cur_atr > 2:
+        if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68 \
+                and cur_atr > 2:
             signal = 'short'
 
         if signal != '':
             prt(f"\nupper band 97: {round(df['upper_band'][97], 3)} \nlower band 97: {round(df['lower_band'][97], 3)}"
-                f"\nRSI 96: {round(df['RSI'][96], 3)} \nRSI 98: {round(df['RSI'][98], 3)}", pointer)
+                f"\nupper band 98: {round(df['upper_band'][98], 3)} \nlower band 98: {round(df['lower_band'][98], 3)}"
+                f"\nRSI 97: {round(df['RSI'][97], 3)} \nATR: {cur_atr}", pointer)
 
         return signal
     except Exception as e:
