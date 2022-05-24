@@ -8,7 +8,5 @@ KEY = os.getenv("KEY")
 SYMBOL = 'ETHUSDT'
 
 current_price = get_symbol_price(SYMBOL)
-df = get_futures_klines(SYMBOL, 100, 'ETH')
-res = get_current_atr(SYMBOL, 'eth')
-print(res)
+print(current_price)
 

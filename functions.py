@@ -19,9 +19,11 @@ client = Client(KEY, SECRET)
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
 def get_symbol_price(symbol):
-    prices = client.get_all_tickers()
-    df = pd.DataFrame(prices)
-    return float(df[df['symbol'] == symbol]['price'])
+    response = requests.get(f'https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}')
+    if response.status_code == 200:
+        x = response.json()
+        return float(x['price'])
+
 
 
 def get_wallet_balance():
