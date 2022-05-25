@@ -50,30 +50,25 @@ def get_futures_klines(symbol, limit, pointer):
         prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
-def check_if_signal(SYMBOL, pointer, KLINES, last_deal):
+def check_if_signal(SYMBOL, pointer, KLINES):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         df = PrepareDF(ohlc)
         df = get_rsi(df)
         df = get_atr(df, 14)
         df = get_bollinger_bands(df)
+        df['slope'] = get_slope(df['close'], 7)
+        mean_slope = df['slope'][85:98].mean()
         signal = ""  # return value
         cur_atr = df['ATR'][98]
-        if last_deal:
-            short_limitation = last_deal['type'] == 'short' and last_deal['start price'] < last_deal['finish price'] \
-                    and df['close'][98] > df['SMA_20'][98]
-            long_limitation = last_deal['type'] == 'long' and last_deal['start price'] > last_deal['finish price'] \
-                    and df['close'][98] < df['SMA_20'][98]
-        else:
-            short_limitation = False
-            long_limitation = False
+
 
         if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32 \
-                and cur_atr > 3 and not long_limitation:
+            and cur_atr > 3 and mean_slope > -30:
                 signal = 'long'
 
         if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68 \
-                and cur_atr > 3 and not short_limitation:
+                and cur_atr > 3 and mean_slope < 30:
                     signal = 'short'
 
         if signal != '':
