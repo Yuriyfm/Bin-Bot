@@ -22,8 +22,8 @@ def get_symbol_price(symbol):
     response = requests.get(f'https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}')
     if response.status_code == 200:
         x = response.json()
-        return float(x['price'])
-
+        current_price = float(x['price'])
+        return current_price
 
 
 def get_wallet_balance():
@@ -50,7 +50,7 @@ def get_futures_klines(symbol, limit, pointer):
         prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
-def check_if_signal(SYMBOL, pointer, KLINES):
+def check_if_signal(SYMBOL, pointer, KLINES, last_deal):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
         df = PrepareDF(ohlc)
@@ -59,14 +59,24 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = get_bollinger_bands(df)
         signal = ""  # return value
         cur_atr = df['ATR'][98]
+        if last_deal:
+            short_limitation = last_deal.type == 'short' and last_deal['start price'] < last_deal['finish price'] \
+                    and df['close'][98] > df['SMA_20'][98]
+        else:
+            short_limitation = False
+        if last_deal:
+            long_limitation = last_deal and last_deal.type == 'long' and last_deal['start price'] > last_deal['finish price'] \
+                    and df['close'][98] < df['SMA_20'][98]
+        else:
+            long_limitation = False
 
         if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32 \
-                and cur_atr > 2:
-            signal = 'long'
+                and cur_atr > 2 and not long_limitation:
+                signal = 'long'
 
         if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68 \
-                and cur_atr > 2:
-            signal = 'short'
+                and cur_atr > 2 and not short_limitation:
+                    signal = 'short'
 
         if signal != '':
             prt(f"\nupper band 97: {round(df['upper_band'][97], 3)} \nlower band 97: {round(df['lower_band'][97], 3)}"

@@ -25,7 +25,8 @@ price = get_symbol_price(SYMBOL)
 
 DEAL = {}
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
-
+last_deal = STAT['deals'][-1] if len(STAT['deals']) > 0 else None
+signal = check_if_signal(SYMBOL, pointer, KLINES, last_deal)
 def main(step):
     global STEP_STOP_PRICE
     global STAT
@@ -35,7 +36,6 @@ def main(step):
 
     current_price = get_symbol_price(SYMBOL)
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
-
     if step == 1:
         prt(f'\nПлюсовых: {STAT["positive"]} '
             f'\nМинусовых: {STAT["negative"]} '
@@ -53,7 +53,8 @@ def main(step):
         if open_sl == "":  # no position
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
-            signal = check_if_signal(SYMBOL,  pointer, KLINES)
+            last_deal = STAT['deals'][-1] if len(STAT['deals']) > 0 else None
+            signal = check_if_signal(SYMBOL,  pointer, KLINES, last_deal)
 
 
             if signal == 'long':

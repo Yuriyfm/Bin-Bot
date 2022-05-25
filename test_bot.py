@@ -7,6 +7,6 @@ load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SYMBOL = 'ETHUSDT'
 
-current_price = get_symbol_price(SYMBOL)
-print(current_price)
-
+df = get_futures_klines(SYMBOL, 100, '')
+df = get_bollinger_bands(df)
+print(df)
