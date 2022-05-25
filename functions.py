@@ -60,9 +60,9 @@ def check_if_signal(SYMBOL, pointer, KLINES, last_deal):
         signal = ""  # return value
         cur_atr = df['ATR'][98]
         if last_deal:
-            short_limitation = last_deal.type == 'short' and last_deal['start price'] < last_deal['finish price'] \
+            short_limitation = last_deal['type'] == 'short' and last_deal['start price'] < last_deal['finish price'] \
                     and df['close'][98] > df['SMA_20'][98]
-            long_limitation = last_deal and last_deal.type == 'long' and last_deal['start price'] > last_deal['finish price'] \
+            long_limitation = last_deal['type'] == 'long' and last_deal['start price'] > last_deal['finish price'] \
                     and df['close'][98] < df['SMA_20'][98]
         else:
             short_limitation = False
