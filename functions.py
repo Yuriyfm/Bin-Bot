@@ -64,11 +64,11 @@ def check_if_signal(SYMBOL, pointer, KLINES):
 
 
         if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32 \
-            and cur_atr > 3 and mean_slope > -30:
+            and cur_atr > 1.5 and mean_slope > -30:
                 signal = 'long'
 
         if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68 \
-                and cur_atr > 3 and mean_slope < 30:
+                and cur_atr > 1.5 and mean_slope < 30:
                     signal = 'short'
 
         if signal != '':
