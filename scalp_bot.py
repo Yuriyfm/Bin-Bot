@@ -88,6 +88,8 @@ def main(step):
 
 
             if open_sl == 'long':
+                if current_price * (1 - STOP_PERCENT) > STOP_PRICE:
+                    STOP_PRICE = current_price * (1 - STOP_PERCENT)
                 if step % 60 == 0:
                     prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
                         f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
@@ -106,7 +108,10 @@ def main(step):
                 elif check_stop_price(SYMBOL, 100, pointer):
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
                     profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
-                    STAT['positive'] += 1
+                    if profit > 0:
+                        STAT['positive'] += 1
+                    else:
+                        STAT['negative'] += 1
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
@@ -115,6 +120,8 @@ def main(step):
                     DEAL = {}
 
             if open_sl == 'short':
+                if current_price * (1 + STOP_PERCENT) < STOP_PRICE:
+                    STOP_PRICE = current_price * (1 + STOP_PERCENT)
                 if step % 60 == 0:
                     prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
                         f'\nТекущий %:{round((current_price / entry_price - 1) * 100, 2)}'
@@ -123,7 +130,10 @@ def main(step):
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE, pointer)
                     profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
-                    STAT['negative'] += 1
+                    if profit > 0:
+                        STAT['positive'] += 1
+                    else:
+                        STAT['negative'] += 1
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
