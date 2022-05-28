@@ -3,7 +3,7 @@ version: '3.7'
 
 # имена и описания контейнеров, которые должны быть развёрнуты
 services:
-  mabot:
+  scalp_bot:
     image: scalp_bot_image
     container_name: scalp_bot
     build:
