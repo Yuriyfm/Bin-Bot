@@ -1,0 +1,13 @@
+FROM python:3.7-slim
+
+RUN mkdir /scalp_bot
+
+COPY requirements.txt /scalp_bot
+
+RUN pip3 install -r /scalp_bot/requirements.txt --no-cache-dir
+
+COPY . /scalp_bot
+
+WORKDIR /scalp_bot
+
+CMD [ "python", "./scalp_bot.py" ]

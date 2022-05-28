@@ -1,5 +1,6 @@
 import numpy as np
 import statsmodels.api as sm
+import pandas as pd
 
 
 def get_rsi(df):
@@ -23,6 +24,7 @@ def get_sma(df):
     df['SMA_2'] = df['close'].rolling(window=2).mean()
     df['SMA_5'] = df['close'].rolling(window=5).mean()
     return df
+
 
 def get_atr(source_DF, n):
     df = source_DF.copy()
@@ -67,3 +69,18 @@ def get_bollinger_bands(df):
     df['upper_band'] = df['SMA_20'] + 2 * rstd
     df['lower_band'] = df['SMA_20'] - 2 * rstd
     return df
+
+
+def sma(price, period):
+    sma = price.rolling(period).mean()
+    return sma
+
+
+def ao(price, period1, period2):
+    median = price.rolling(2).median()
+    short = sma(median, period1)
+    long = sma(median, period2)
+    ao = short - long
+    ao_df = pd.DataFrame(ao).rename(columns = {'close':'ao'})
+    return ao_df
+

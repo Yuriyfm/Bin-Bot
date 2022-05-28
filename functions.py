@@ -4,9 +4,9 @@ import time
 from dotenv import load_dotenv
 from pathlib import Path
 import os
-from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
-from futures_sign import send_signed_request, send_public_request
-from indicators import get_atr, get_slope, get_rsi, get_ema, get_bollinger_bands
+from binance import Client
+from futures_sign import send_signed_request
+from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -53,32 +53,30 @@ def get_futures_klines(symbol, limit, pointer):
 def check_if_signal(SYMBOL, pointer, KLINES):
     try:
         ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
-        df = PrepareDF(ohlc)
+        df = prepareDF(ohlc)
         df = get_rsi(df)
         df = get_atr(df, 14)
         df = get_bollinger_bands(df)
         df['slope'] = get_slope(df['close'], 7)
-        mean_slope = df['slope'][85:98].mean()
         signal = ""  # return value
-        cur_atr = df['ATR'][98]
 
+        if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32:
+            signal = 'long'
 
-        if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32 \
-            and cur_atr > 1.5 and mean_slope > -30:
-                signal = 'long'
-
-        if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68 \
-                and cur_atr > 1.5 and mean_slope < 30:
-                    signal = 'short'
-
-        if signal != '':
-            prt(f"\nupper band 97: {round(df['upper_band'][97], 3)} \nlower band 97: {round(df['lower_band'][97], 3)}"
-                f"\nupper band 98: {round(df['upper_band'][98], 3)} \nlower band 98: {round(df['lower_band'][98], 3)}"
-                f"\nRSI 97: {round(df['RSI'][97], 3)} \nATR: {cur_atr}", pointer)
+        if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68:
+            signal = 'short'
 
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
+
+
+def check_stop_price(SYMBOL, KLINES, pointer):
+    ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
+    df = prepareDF(ohlc)
+    df['ao'] = ao(df['close'], 5, 34)
+    res = df['ao'][96] < df['ao'][97] > df['ao'][98] or df['ao'][96] > df['ao'][97] < df['ao'][98]
+    return res
 
 
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -193,7 +191,7 @@ def check_and_close_orders(symbol):
 
 
 # generate data frame with all needed data
-def PrepareDF(DF):
+def prepareDF(DF):
     df = DF.iloc[:, [0, 1, 2, 3, 4, 5]]
     df.columns = ["date", "open", "high", "low", "close", "volume"]
     df = df.set_index('date')
@@ -203,7 +201,7 @@ def PrepareDF(DF):
 
 def get_current_atr(symbol, pointer):
     df = get_futures_klines(symbol, 15, pointer)
-    df = PrepareDF(df)
+    df = prepareDF(df)
     df = get_atr(df, 14)
     cur_atr = df['ATR'][14]
     return cur_atr

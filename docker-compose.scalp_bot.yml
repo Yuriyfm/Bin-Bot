@@ -1,0 +1,14 @@
+# версия docker-compose
+version: '3.7'
+
+# имена и описания контейнеров, которые должны быть развёрнуты
+services:
+  mabot:
+    image: scalp_bot_image
+    container_name: scalp_bot
+    build:
+      context: .
+      dockerfile: Dockerfile.scalp_bot
+    restart: always
+    env_file:
+      - ./.env

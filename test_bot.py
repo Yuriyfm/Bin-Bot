@@ -8,6 +8,6 @@ KEY = os.getenv("KEY")
 SYMBOL = 'ETHUSDT'
 
 df = get_futures_klines(SYMBOL, 500, '')
-df['slope'] = get_slope(df['close'], 7)
-mean_slope = df['slope'][431:444].mean()
-print(mean_slope)
+df = prepareDF(df)
+res = check_stop_price(SYMBOL, 100, '')
+print(res)
