@@ -105,7 +105,7 @@ def main(step):
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
-                elif check_stop_price(SYMBOL, 100, pointer):
+                elif check_stop_price(SYMBOL, 100, pointer, open_sl):
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
                     profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
                     if profit > 0:
@@ -140,7 +140,7 @@ def main(step):
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
                     STAT['deals'].append(DEAL)
                     DEAL = {}
-                elif check_stop_price(SYMBOL, 100, pointer):
+                elif check_stop_price(SYMBOL, 100, pointer, open_sl):
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE, pointer)
                     profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
                     STAT['positive'] += 1

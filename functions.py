@@ -73,12 +73,16 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
 
 
-def check_stop_price(SYMBOL, KLINES, pointer):
+def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
     ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
     df = prepareDF(ohlc)
     df['ao'] = ao(df['close'], 5, 34)
-    res = df['ao'][96] < df['ao'][97] > df['ao'][98] or df['ao'][96] > df['ao'][97] < df['ao'][98]
-    return res
+    stop_long = df['ao'][96] < df['ao'][97] > df['ao'][98]
+    stop_short = df['ao'][96] > df['ao'][97] < df['ao'][98]
+    if deal_type == 'long':
+        return stop_long
+    else:
+        return stop_short
 
 
 # функция открытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
