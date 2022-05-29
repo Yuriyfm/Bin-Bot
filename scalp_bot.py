@@ -17,7 +17,6 @@ SECRET = os.getenv("SECRET")
 SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
-STOP_PERCENT = 0.003
 PROFIT_PERCENT = 0.005
 ATR_RATE = 0.3
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
@@ -60,25 +59,23 @@ def main(step):
 
             if signal == 'long':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.2 / price, 3)
-                now = datetime.datetime.now()
+                max_position = round(balance * 0.1 / price, 3)
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                STOP_PRICE = current_price * (1 - STOP_PERCENT)
                 PROFIT_PRICE = current_price * (1 + PROFIT_PERCENT)
                 prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, 2)}$, по курсу {current_price}', pointer)
 
             elif signal == 'short':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.2 / price, 3)
-                now = datetime.datetime.now()
+                max_position = round(balance * 0.1 / price, 3)
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                STOP_PRICE = current_price * (1 + STOP_PERCENT)
                 PROFIT_PRICE = current_price * (1 - PROFIT_PERCENT)
                 prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, 2)}$, по курсу {current_price}', pointer)
 
@@ -86,70 +83,37 @@ def main(step):
             entry_price = position[5]  # enter price
             quantity = position[1]
 
-
-            if open_sl == 'long':
-                if current_price * (1 - STOP_PERCENT) > STOP_PRICE:
-                    STOP_PRICE = current_price * (1 - STOP_PERCENT)
-                if step % 60 == 0:
-                    prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                        f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
-                        f'\nATR: {atr_stop_percent * 100}', pointer)
-                if current_price < STOP_PRICE:
-                    # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
-                    profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
-                    STAT['negative'] += 1
-                    STAT['balance'] += profit
-                    DEAL['profit'] = profit
-                    DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
-                elif check_stop_price(SYMBOL, 100, pointer, open_sl):
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
-                    profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
-                    if profit > 0:
-                        STAT['positive'] += 1
-                    else:
-                        STAT['negative'] += 1
-                    STAT['balance'] += profit
-                    DEAL['profit'] = profit
-                    DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
-
-            if open_sl == 'short':
-                if current_price * (1 + STOP_PERCENT) < STOP_PRICE:
-                    STOP_PRICE = current_price * (1 + STOP_PERCENT)
-                if step % 60 == 0:
-                    prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                        f'\nТекущий %:{round((current_price / entry_price - 1) * 100, 2)}'
-                        f'\nATR: {atr_stop_percent * 100}', pointer)
-                if current_price > STOP_PRICE:
-                    # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE, pointer)
-                    profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
-                    if profit > 0:
-                        STAT['positive'] += 1
-                    else:
-                        STAT['negative'] += 1
-                    STAT['balance'] += profit
-                    DEAL['profit'] = profit
-                    DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
-                elif check_stop_price(SYMBOL, 100, pointer, open_sl):
-                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE, pointer)
-                    profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
+            if open_sl == 'long' and check_stop_price(SYMBOL, 100, pointer, open_sl):
+                close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
+                profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
+                if profit > 0:
                     STAT['positive'] += 1
-                    STAT['balance'] += profit
-                    DEAL['profit'] = profit
-                    DEAL['finish price'] = current_price
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
-                    DEAL = {}
+                else:
+                    STAT['negative'] += 1
+                STAT['balance'] += profit
+                DEAL['profit'] = profit
+                DEAL['finish price'] = current_price
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
+                DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
+                prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
+                STAT['deals'].append(DEAL)
+                DEAL = {}
+
+            if open_sl == 'short' and check_stop_price(SYMBOL, 100, pointer, open_sl):
+                close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE, pointer)
+                profit = round(((entry_price / current_price - 1) * 100) - 0.045, 3)
+                if profit > 0:
+                    STAT['positive'] += 1
+                else:
+                    STAT['negative'] += 1
+                STAT['balance'] += profit
+                DEAL['profit'] = profit
+                DEAL['finish price'] = current_price
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
+                DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
+                prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
+                STAT['deals'].append(DEAL)
+                DEAL = {}
 
     except Exception as e:
         prt(f'Ошибка в main: \n{e}', pointer)
@@ -165,7 +129,7 @@ while time.time() <= timeout:
         counter_r = counter_r + 1
         if counter_r > 360:
             counter_r = 1
-        time.sleep(10 - ((time.time() - start_time) % 10.0))  # запрос к площадке каждые 10 секунд
+        time.sleep(5 - ((time.time() - start_time) % 5.0))  # запрос к площадке каждые 10 секунд
     except KeyboardInterrupt:
         print('\n KeyboardInterrupt. Stopping.')
         exit()
