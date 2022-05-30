@@ -8,4 +8,6 @@ load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SYMBOL = 'ETHUSDT'
 
-
+df = get_futures_klines(SYMBOL, 100, 'eth', 5)
+res = get_sma_100_slope(df, 100, 10)
+print(res)

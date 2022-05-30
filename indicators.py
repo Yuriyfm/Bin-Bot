@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import statsmodels.api as sm
 import pandas as pd
@@ -81,6 +83,12 @@ def ao(price, period1, period2):
     short = sma(median, period1)
     long = sma(median, period2)
     ao = short - long
-    ao_df = pd.DataFrame(ao).rename(columns = {'close':'ao'})
+    ao_df = pd.DataFrame(ao).rename(columns={'close': 'ao'})
     return ao_df
 
+
+def get_sma_100_slope(df, klines, n):
+    df['SMA_100'] = df['close'].rolling(window=20).mean()
+    slope = (df['SMA_100'][klines - 1] - df['SMA_100'][klines - 1 - n]) / n
+    slope_deg = math.atan(slope) * 180 / math.pi
+    return slope_deg

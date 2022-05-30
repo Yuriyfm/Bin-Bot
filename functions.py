@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from binance import Client
 from futures_sign import send_signed_request
-from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao
+from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma_100_slope, get_sma_100_slope
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -33,10 +33,10 @@ def get_wallet_balance():
 
 
 # функция запрашивает с площадки последние 500 свечей по пять минут и возвращает датафрейм с нужными столбцами
-def get_futures_klines(symbol, limit, pointer):
+def get_futures_klines(symbol, limit, pointer, time_frame):
     try:
         x = requests.get(
-            f'https://www.binance.com/fapi/v1/klines?symbol={symbol}&limit={limit}&interval=1m')
+            f'https://www.binance.com/fapi/v1/klines?symbol={symbol}&limit={limit}&interval={time_frame}m')
         df = pd.DataFrame(x.json())
         df.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'd1', 'd2', 'd3', 'd4', 'd5']
         df = df.drop(['d1', 'd2', 'd3', 'd4', 'd5'], axis=1)
@@ -52,21 +52,23 @@ def get_futures_klines(symbol, limit, pointer):
 
 def check_if_signal(SYMBOL, pointer, KLINES):
     try:
-        ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
-        df = prepareDF(ohlc)
+        df = get_futures_klines(SYMBOL, KLINES, pointer, 1)
+        df = prepareDF(df)
         df = get_rsi(df)
         df = get_atr(df, 14)
         df = get_bollinger_bands(df)
         df['slope'] = get_slope(df['close'], 7)
         signal = ""  # return value
+        df_5m = get_futures_klines(SYMBOL, KLINES, pointer, 5)
+        slope = get_sma_100_slope(df_5m, 100, 10)
 
-        if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32\
-                :
-            signal = 'long'
+        if slope > 5:
+            if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32:
+                signal = 'long'
 
-        if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68\
-                :
-            signal = 'short'
+        if slope < -5:
+            if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68:
+                signal = 'short'
 
         return signal
     except Exception as e:
@@ -74,7 +76,7 @@ def check_if_signal(SYMBOL, pointer, KLINES):
 
 
 def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
-    ohlc = get_futures_klines(SYMBOL, KLINES, pointer)
+    ohlc = get_futures_klines(SYMBOL, KLINES, pointer, 1)
     df = prepareDF(ohlc)
     df['ao'] = ao(df['close'], 5, 34)
     stop_long = df['ao'][96] < df['ao'][97] > df['ao'][98]
@@ -206,7 +208,7 @@ def prepareDF(DF):
 
 
 def get_current_atr(symbol, pointer):
-    df = get_futures_klines(symbol, 15, pointer)
+    df = get_futures_klines(symbol, 15, pointer, 1)
     df = prepareDF(df)
     df = get_atr(df, 14)
     cur_atr = df['ATR'][14]
