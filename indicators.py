@@ -87,8 +87,8 @@ def ao(price, period1, period2):
     return ao_df
 
 
-def get_sma_100_slope(df, klines, n):
-    df['SMA_100'] = df['close'].rolling(window=20).mean()
-    slope = (df['SMA_100'][klines - 1] - df['SMA_100'][klines - 1 - n]) / n
+def get_sma_250_slope(df, klines, n):
+    df['SMA_250'] = df['close'].rolling(window=50).mean()
+    slope = (df['SMA_250'][klines - 1] - df['SMA_250'][klines - 1 - n]) / n
     slope_deg = math.atan(slope) * 180 / math.pi
     return slope_deg
