@@ -17,7 +17,7 @@ SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
 STOP_PRICE = 0
-ATR_RATE = 0.2
+ATR_RATE = 0.4
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 100
 price = get_symbol_price(SYMBOL)
@@ -57,7 +57,7 @@ def main(step):
 
             if signal == 'long':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.2 / price, 3)
+                max_position = round(balance * 0.1 / price, 3)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
@@ -68,7 +68,7 @@ def main(step):
 
             elif signal == 'short':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.2 / price, 3)
+                max_position = round(balance * 0.1 / price, 3)
                 now = datetime.datetime.now()
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
