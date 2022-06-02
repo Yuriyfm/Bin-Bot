@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from binance import Client
 from futures_sign import send_signed_request
-from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma_250_slope, get_sma_250_slope
+from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, sma
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -56,7 +56,8 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = prepareDF(df)
         df = get_rsi(df)
         df = get_bollinger_bands(df)
-        df['slope'] = get_slope(df['close'], 14)
+        df['SMA_100'] = sma(df['close'], 100)
+        df['slope'] = get_slope(df['SMA_100'], 14)
         signal = ""  # return value
 
 
