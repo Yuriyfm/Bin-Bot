@@ -87,4 +87,6 @@ def ao(price, period1, period2):
     return ao_df
 
 
-
+def get_sma_slope(sma, n):
+    slope = np.arctan((sma - sma.shift(n)) / n) * 180 / np.pi
+    return slope
