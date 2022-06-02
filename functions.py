@@ -64,10 +64,12 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         if df['slope'][i] > -25:
             if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and df['RSI'][i - 2] < 32:
                 signal = 'long'
+                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         if df['slope'][i] < 25:
             if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68:
                 signal = 'short'
+                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         return signal
     except Exception as e:
