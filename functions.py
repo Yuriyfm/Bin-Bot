@@ -56,15 +56,15 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = prepareDF(df)
         df = get_rsi(df)
         df = get_bollinger_bands(df)
+        df['slope'] = get_slope(df['close'], 14)
         signal = ""  # return value
-        df_5m = get_futures_klines(SYMBOL, KLINES, pointer, 5)
-        slope = get_sma_250_slope(df_5m, 100, 5)
 
-        if slope < 5:
+
+        if df['slope'] > -30:
             if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32:
                 signal = 'long'
 
-        if slope > -5:
+        if df['slope'] < 30:
             if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68:
                 signal = 'short'
 
