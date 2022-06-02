@@ -59,14 +59,14 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df['SMA_100'] = sma(df['close'], 100)
         df['slope'] = get_slope(df['SMA_100'], 14)
         signal = ""  # return value
+        i = KLINES - 1
 
-
-        if df['slope'] > -30:
-            if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32:
+        if df['slope'][i] > -30:
+            if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and df['RSI'][i - 2] < 32:
                 signal = 'long'
 
-        if df['slope'] < 30:
-            if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68:
+        if df['slope'][i] < 30:
+            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68:
                 signal = 'short'
 
         return signal
