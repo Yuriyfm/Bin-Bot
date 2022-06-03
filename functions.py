@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from binance import Client
 from futures_sign import send_signed_request
-from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma_100_slope, get_sma_100_slope
+from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, sma, get_sma_slope
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -55,16 +55,24 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = get_futures_klines(SYMBOL, KLINES, pointer, 1)
         df = prepareDF(df)
         df = get_rsi(df)
-        df = get_atr(df, 14)
         df = get_bollinger_bands(df)
+
+        df['SMA_100'] = sma(df['close'], 100)
+        df['slope'] = get_sma_slope(df['SMA_100'], 14)
         signal = ""  # return value
-
-        if df['close'][97] < df['lower_band'][97] and df['close'][98] > df['lower_band'][98] and df['RSI'][97] < 32:
-            signal = 'long'
+        i = KLINES - 1
 
 
-        if df['close'][97] > df['upper_band'][97] and df['close'][98] < df['upper_band'][98] and df['RSI'][97] > 68:
-            signal = 'short'
+        if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and df['RSI'][i - 2] < 32:
+            prt(f"сигнал long по bb и rsi", pointer)
+            if df['slope'][i] > -25:
+                signal = 'long'
+                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
+
+        if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68:
+            if df['slope'][i] < 25:
+                signal = 'short'
+                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         return signal
     except Exception as e:

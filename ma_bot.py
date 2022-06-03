@@ -19,7 +19,7 @@ client = Client(KEY, SECRET)
 STOP_PRICE = 0
 ATR_RATE = 0.4
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
-KLINES = 100
+KLINES = 200
 price = get_symbol_price(SYMBOL)
 
 
@@ -101,7 +101,7 @@ def main(step):
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
+                    # STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
 
@@ -124,7 +124,7 @@ def main(step):
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    STAT['deals'].append(DEAL)
+                    # STAT['deals'].append(DEAL)
                     DEAL = {}
                     STEP_STOP_PRICE = None
 
