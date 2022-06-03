@@ -56,6 +56,7 @@ def check_if_signal(SYMBOL, pointer, KLINES):
         df = prepareDF(df)
         df = get_rsi(df)
         df = get_bollinger_bands(df)
+        df = get_atr(df, 14)
 
         df['SMA_100'] = sma(df['close'], 100)
         df['slope'] = get_sma_slope(df['SMA_100'], 14)
@@ -64,13 +65,12 @@ def check_if_signal(SYMBOL, pointer, KLINES):
 
 
         if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and df['RSI'][i - 2] < 32:
-            prt(f"сигнал long по bb и rsi", pointer)
-            if df['slope'][i] > -25:
+            if df['slope'][i] > -10 and df['ATR'][i] > 1.5:
                 signal = 'long'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68:
-            if df['slope'][i] < 25:
+            if df['slope'][i] < 10 and df['ATR'][i] > 1.5:
                 signal = 'short'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
