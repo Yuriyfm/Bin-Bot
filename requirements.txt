@@ -1,7 +1,7 @@
-requests~=2.27.1
+requests
 numpy
-pandas~=1.4.1
-statsmodels~=0.13.2
-matplotlib~=3.5.1
-python-dotenv~=0.19.2
+pandas
+statsmodels
+matplotlib
+python-dotenv
 python-binance
