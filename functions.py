@@ -7,6 +7,8 @@ import os
 from binance import Client
 from futures_sign import send_signed_request
 from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, sma, get_sma_slope
+import numpy as np
+import datetime as dt
 
 load_dotenv()
 env_path = Path('.') / '.env'

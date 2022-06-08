@@ -10,5 +10,9 @@ services:
       context: .
       dockerfile: Dockerfile.ma_bot
     restart: always
+    volumes:
+      # Контейнер web будет работать с данными, хранящиеся в томе deals_data,
+      # через свою директорию /app/deals_data/
+      - deals_data:/ma_bot/deals_data/
     env_file:
       - ./.env
