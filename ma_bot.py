@@ -30,18 +30,8 @@ if not os.path.exists(file_url):
     my_file.close()
 
 DEAL = {}
-STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
+STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0}
 
-# 1. Read file contents
-with open(file_url, "r") as file:
-    data = json.load(file)
-
-# 2. Update json object
-data.append(STAT)
-
-# 3. Write json file
-with open(file_url, "w") as file:
-    json.dump(data, file)
 
 def main(step):
     global STEP_STOP_PRICE
@@ -117,7 +107,13 @@ def main(step):
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    # STAT['deals'].append(DEAL)
+
+                    with open(file_url, "r") as file:
+                        data = json.load(file)
+                    data.append(DEAL)
+                    with open(file_url, "w") as file:
+                        json.dump(data, file)
+
                     DEAL = {}
                     STEP_STOP_PRICE = None
 
@@ -140,7 +136,13 @@ def main(step):
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
-                    # STAT['deals'].append(DEAL)
+
+                    with open(file_url, "r") as file:
+                        data = json.load(file)
+                    data.append(DEAL)
+                    with open(file_url, "w") as file:
+                        json.dump(data, file)
+
                     DEAL = {}
                     STEP_STOP_PRICE = None
 
