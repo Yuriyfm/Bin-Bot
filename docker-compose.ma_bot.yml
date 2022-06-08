@@ -16,3 +16,5 @@ services:
       - deals_data:/ma_bot/deals_data/
     env_file:
       - ./.env
+volumes:
+  deals_data:
