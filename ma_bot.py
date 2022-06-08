@@ -23,11 +23,11 @@ pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
 price = get_symbol_price(SYMBOL)
 
-file_url = 'deals_data/deals_data.json'
-if not os.path.exists(file_url):
-    my_file = open(file_url, "w")
-    my_file.write('[]')
-    my_file.close()
+# file_url = 'deals_data/deals_data.json'
+# if not os.path.exists(file_url):
+#     my_file = open(file_url, "w")
+#     my_file.write('[]')
+#     my_file.close()
 
 DEAL = {}
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0}
@@ -108,11 +108,11 @@ def main(step):
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
 
-                    with open(file_url, "r") as file:
-                        data = json.load(file)
-                    data.append(DEAL)
-                    with open(file_url, "w") as file:
-                        json.dump(data, file)
+                    # with open(file_url, "r") as file:
+                    #     data = json.load(file)
+                    # data.append(DEAL)
+                    # with open(file_url, "w") as file:
+                    #     json.dump(data, file)
 
                     DEAL = {}
                     STEP_STOP_PRICE = None
@@ -137,11 +137,11 @@ def main(step):
                     DEAL['finish price'] = current_price
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
 
-                    with open(file_url, "r") as file:
-                        data = json.load(file)
-                    data.append(DEAL)
-                    with open(file_url, "w") as file:
-                        json.dump(data, file)
+                    # with open(file_url, "r") as file:
+                    #     data = json.load(file)
+                    # data.append(DEAL)
+                    # with open(file_url, "w") as file:
+                    #     json.dump(data, file)
 
                     DEAL = {}
                     STEP_STOP_PRICE = None
