@@ -33,4 +33,4 @@ data.append(data1)
 with open(file_url, "w") as file:
     json.dump(data, file)
 
-# docker/volumes/deals_data/deals_data.json
+# var/lib/docker/volumes/deals_data/deals_data.json

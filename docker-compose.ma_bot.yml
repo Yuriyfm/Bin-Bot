@@ -18,3 +18,4 @@ services:
       - ./.env
 volumes:
   deals_data:
+    external: true
