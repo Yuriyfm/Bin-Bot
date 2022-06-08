@@ -23,16 +23,16 @@ pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
 price = get_symbol_price(SYMBOL)
 
-filename = 'deals_data/deals_data.json'
-data2 = {'type': 'short', 'start time': '19-05-2022 15:40', 'start price': 2025.39, 'profit': -0.251, 'finish price': 2037.91}
-
-with open(filename, "r") as file:
-    data = json.load(file)
-
-data.append(data2)
-
-with open(filename, "w") as file:
-    json.dump(data, file)
+# filename = 'deals_data/deals_data.json'
+# data2 = {'type': 'short', 'start time': '19-05-2022 15:40', 'start price': 2025.39, 'profit': -0.251, 'finish price': 2037.91}
+#
+# with open(filename, "r") as file:
+#     data = json.load(file)
+#
+# data.append(data2)
+#
+# with open(filename, "w") as file:
+#     json.dump(data, file)
 
 DEAL = {}
 STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0, 'deals': []}
