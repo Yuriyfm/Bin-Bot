@@ -18,7 +18,7 @@ SYMBOL = 'ETHUSDT'
 client = Client(KEY, SECRET)
 
 STOP_PRICE = 0
-ATR_RATE = 0.4
+ATR_RATE = 0.25
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
 price = get_symbol_price(SYMBOL)
