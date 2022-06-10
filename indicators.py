@@ -39,6 +39,10 @@ def get_atr(source_DF, n):
     return df_temp
 
 
+def deal(deals):
+    deals.append(1)
+
+
 def get_slope(series, n):
     array_sl = [j * 0 for j in range(n - 1)]
     for j in range(n, len(series) + 1):

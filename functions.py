@@ -52,7 +52,7 @@ def get_futures_klines(symbol, limit, pointer, time_frame):
         prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
-def check_if_signal(SYMBOL, pointer, KLINES):
+def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
     try:
         df = get_futures_klines(SYMBOL, KLINES, pointer, 1)
         df = prepareDF(df)
@@ -87,6 +87,18 @@ def check_if_signal(SYMBOL, pointer, KLINES):
                 signal = 'short'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
+        if signal != '':
+            DEAL['SMA_100 slope 14'] = df['slope'][i]
+            DEAL['close i-2'] = df['close'][i - 2]
+            DEAL['close i-1'] = df['close'][i - 1]
+            DEAL['close i'] = df['close'][i]
+            DEAL['lower_band i-2'] = df['lower_band'][i - 2]
+            DEAL['lower_band i-1'] = df['lower_band'][i - 1]
+            DEAL['upper_band i-2'] = df['upper_band'][i - 2]
+            DEAL['upper_band i-1'] = df['upper_band'][i - 1]
+            DEAL['RSI i-1'] = df['RSI'][i - 1]
+            DEAL['RSI i-2'] = df['RSI'][i - 2]
+            DEAL['ATR i'] = df['ATR'][i]
         return signal
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)

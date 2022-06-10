@@ -21,16 +21,17 @@ STOP_PRICE = 0
 ATR_RATE = 0.25
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
+MAX_PROFIT = 0
 price = get_symbol_price(SYMBOL)
 
 file_url = 'deals_data/deals_data.json'
-# if not os.path.exists(file_url):
-#     my_file = open(file_url, "w")
-#     my_file.write('[]')
-#     my_file.close()
+if not os.path.exists(file_url):
+    my_file = open(file_url, "w")
+    my_file.write('[]')
+    my_file.close()
 
 DEAL = {}
-STAT = {'start': time.time(), 'positive': 0, 'negative': 0, 'balance': 0}
+STAT = {'start': datetime.datetime.now() + datetime.timedelta(hours=7), 'positive': 0, 'negative': 0, 'balance': 0}
 
 
 def main(step):
@@ -39,6 +40,7 @@ def main(step):
     global DEAL
     global max_position
     global STOP_PRICE
+    global MAX_PROFIT
 
     current_price = get_symbol_price(SYMBOL)
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
@@ -57,12 +59,12 @@ def main(step):
         if open_sl == "":  # no position
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
-            signal = check_if_signal(SYMBOL,  pointer, KLINES)
+            signal = check_if_signal(SYMBOL,  pointer, KLINES, DEAL)
 
             if signal == 'long':
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.1 / price, 3)
-                now = datetime.datetime.now()
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -73,7 +75,7 @@ def main(step):
             elif signal == 'short':
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.1 / price, 3)
-                now = datetime.datetime.now()
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
@@ -87,12 +89,14 @@ def main(step):
 
 
             if open_sl == 'long':
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 if current_price * (1 - atr_stop_percent * ATR_RATE) > STOP_PRICE:
                     STOP_PRICE = current_price * (1 - atr_stop_percent * ATR_RATE)
+                    MAX_PROFIT = round((current_price / entry_price - 1) * 100, 2) if round((current_price /  entry_price - 1) * 100, 2) > MAX_PROFIT else MAX_PROFIT
                 if step % 60 == 0:
                     prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
                         f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
-                        f'\nATR: {atr_stop_percent * 100}', pointer)
+                        f'\nATR: {round(atr_stop_percent * 100, 2)}', pointer)
                 if current_price < STOP_PRICE:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
@@ -104,6 +108,8 @@ def main(step):
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
+                    DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
+                    DEAL['max profit'] = MAX_PROFIT
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
 
                     with open(file_url, "r") as file:
@@ -114,14 +120,17 @@ def main(step):
 
                     DEAL = {}
                     STEP_STOP_PRICE = None
+                    MAX_PROFIT = 0
 
             if open_sl == 'short':
+                now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 if current_price * (1 + atr_stop_percent * ATR_RATE) < STOP_PRICE:
                     STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
+                    MAX_PROFIT = round((1 - current_price /  entry_price) * 100, 2) if round((1 - current_price /  entry_price) * 100, 2) > MAX_PROFIT else MAX_PROFIT
                 if step % 60 == 0:
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
                         f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, 2)}'
-                        f'\nATR: {atr_stop_percent * 100}', pointer)
+                        f'\nATR: {round(atr_stop_percent * 100, 2)}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
                     close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
@@ -133,6 +142,8 @@ def main(step):
                     STAT['balance'] += profit
                     DEAL['profit'] = profit
                     DEAL['finish price'] = current_price
+                    DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
+                    DEAL['max profit'] = MAX_PROFIT
                     prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
 
                     with open(file_url, "r") as file:
@@ -143,13 +154,14 @@ def main(step):
 
                     DEAL = {}
                     STEP_STOP_PRICE = None
+                    MAX_PROFIT = 0
 
     except Exception as e:
         prt(f'Ошибка в main: \n{e}', pointer)
 
 
 start_time = time.time()
-timeout = time.time() + 60 * 60 * 168  # таймер времени работы бота
+timeout = time.time() + 60 * 60 * 240  # таймер времени работы бота
 counter_r = 1
 
 while time.time() <= timeout:
