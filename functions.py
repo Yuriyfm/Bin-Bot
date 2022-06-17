@@ -67,23 +67,23 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
 
         if df['slope'][i] > -10:
             if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and \
-                    df['RSI'][i - 2] < 32 and df['ATR'][i] > 1.5:
+                    df['RSI'][i - 2] < 30 and df['ATR'][i] < 7:
                 signal = 'long'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         if df['slope'][i] > 10:
-            if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1]:
+            if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and df['ATR'][i] < 7:
                 signal = 'long'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         if df['slope'][i] < 10:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68\
-                    and df['ATR'][i] > 1.5:
+            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 70\
+                    and df['ATR'][i] < 7:
                 signal = 'short'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
         if df['slope'][i] < -10:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
+            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['ATR'][i] < 7:
                 signal = 'short'
                 prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
 
