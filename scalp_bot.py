@@ -136,7 +136,8 @@ while time.time() <= timeout:
         if counter_r > 360:
             counter_r = 1
         time.sleep(10 - ((time.time() - start_time) % 10.0))  # запрос к площадке каждые 10 секунд
-    except KeyboardInterrupt:
-        print('\n KeyboardInterrupt. Stopping.')
+    except Exception as e:
+        print(e)
+        prt(e, pointer)
         exit()
 

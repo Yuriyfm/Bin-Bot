@@ -321,6 +321,7 @@ def check_diff(pointer, SYMBOL_LIST):
         if res[0] == 'long':
             cur_price = get_symbol_price(i)
             if 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
+                prt(f'выбрал валюту {i}', pointer)
                 return i
     return ''
 
