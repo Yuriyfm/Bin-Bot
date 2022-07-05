@@ -308,23 +308,25 @@ def get_last_intersection(DF, SMA_1, SMA_2):
 
 
 def check_diff(pointer, SYMBOL_LIST):
-    symbol_list = parce_val() if SYMBOL_LIST == [] else SYMBOL_LIST
-    for i in symbol_list:
-        DF = get_futures_klines(i, 100, pointer, 1)
-        DF = prepareDF(DF)
-        DF['SMA_9'] = get_sma(DF['close'], 9)
-        DF['SMA_31'] = get_sma(DF['close'], 31)
-        DF = get_rsi(DF)
-        DF = get_bollinger_bands(DF)
+    try:
+        symbol_list = parce_val() if SYMBOL_LIST == [] else SYMBOL_LIST
+        for i in symbol_list:
+            DF = get_futures_klines(i, 100, pointer, 1)
+            DF = prepareDF(DF)
+            DF['SMA_9'] = get_sma(DF['close'], 9)
+            DF['SMA_31'] = get_sma(DF['close'], 31)
+            DF = get_rsi(DF)
+            DF = get_bollinger_bands(DF)
 
-        res = get_last_intersection(DF, 9, 31)
-        if res[0] == 'long':
-            cur_price = get_symbol_price(i)
-            if 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
-                prt(f'выбрал валюту {i}', pointer)
-                return i
-    return ''
-
+            res = get_last_intersection(DF, 9, 31)
+            if res[0] == 'long':
+                cur_price = get_symbol_price(i)
+                if 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
+                    prt(f'выбрал валюту {i}', pointer)
+                    return i
+        return ''
+    except Exception as e:
+        print(f'Ошибка в функции выбора валюты: \n{e}')
 
 def prt(message, pointer):
     telegram_bot_sendtext(pointer + ': ' + message)

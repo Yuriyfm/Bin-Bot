@@ -23,7 +23,7 @@ SYMBOL_LIST = []
 
 STOP_PRICE = 0
 ATR_RATE = 0.25
-pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
+pointer = str(f'{random.randint(1000, 9999)}')
 KLINES = 200
 MAX_PROFIT = 0
 
