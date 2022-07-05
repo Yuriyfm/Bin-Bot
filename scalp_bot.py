@@ -51,16 +51,16 @@ def main(step):
 
     SYMBOL = check_diff(pointer, SYMBOL_LIST) if SYMBOL == '' else SYMBOL
 
+    if step == 1:
+        prt(f'\nПлюсовых: {STAT["positive"]} '
+            f'\nМинусовых: {STAT["negative"]} '
+            f'\nprofit %: {round(STAT["balance"], 2)}, '
+            f'\nБаланс: {get_wallet_balance()}'
+            f'\nТекущая сделка: {DEAL}', pointer)
+
     if SYMBOL:
         current_price = get_symbol_price(SYMBOL)
         atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
-        if step == 1:
-            prt(f'\nПлюсовых: {STAT["positive"]} '
-                f'\nМинусовых: {STAT["negative"]} '
-                f'\nprofit %: {round(STAT["balance"], 2)}, '
-                f'\nБаланс: {get_wallet_balance()}'
-                f'\nТекущий курс: {current_price}'
-                f'\nТекущая сделка: {DEAL}', pointer)
 
         try:
             getTPSLfrom_telegram(SYMBOL)
