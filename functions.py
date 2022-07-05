@@ -312,20 +312,19 @@ def check_diff(pointer, SYMBOL_LIST):
         symbol_list = parce_val() if SYMBOL_LIST == [] else SYMBOL_LIST
         for i in symbol_list:
             DF = get_futures_klines(i, 100, pointer, 1)
-            if DF:
-                DF = prepareDF(DF)
-                DF['SMA_9'] = get_sma(DF['close'], 9)
-                DF['SMA_31'] = get_sma(DF['close'], 31)
-                DF = get_rsi(DF)
-                DF = get_bollinger_bands(DF)
+            DF = prepareDF(DF)
+            DF['SMA_9'] = get_sma(DF['close'], 9)
+            DF['SMA_31'] = get_sma(DF['close'], 31)
+            DF = get_rsi(DF)
+            DF = get_bollinger_bands(DF)
 
-                res = get_last_intersection(DF, 9, 31)
+            res = get_last_intersection(DF, 9, 31)
 
-                if res[0] == 'long':
-                    cur_price = get_symbol_price(i)
-                    if cur_price and 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
-                        prt(f'выбрал валюту {i}', pointer)
-                        return i
+            if res[0] == 'long':
+                cur_price = get_symbol_price(i)
+                if cur_price and 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
+                    prt(f'выбрал валюту {i}', pointer)
+                    return i
         return ''
     except Exception as e:
         prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
