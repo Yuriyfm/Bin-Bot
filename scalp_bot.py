@@ -26,7 +26,6 @@ ATR_RATE = 0.25
 pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
 MAX_PROFIT = 0
-price = get_symbol_price(SYMBOL)
 
 file_url = 'deals_data/deals_data.json'
 if not os.path.exists(file_url):
@@ -74,7 +73,7 @@ def main(step):
                     SYMBOL = ''
                 if signal == 'long':
                     balance = get_wallet_balance()
-                    max_position = round(balance * 0.1 / price, 3)
+                    max_position = round(balance * 0.1 / current_price, 3)
                     now = datetime.datetime.now() + datetime.timedelta(hours=7)
                     open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                     DEAL['type'] = signal
