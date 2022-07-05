@@ -326,6 +326,7 @@ def check_diff(pointer, SYMBOL_LIST):
                     return i
         return ''
     except Exception as e:
+        prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
         print(f'Ошибка в функции выбора валюты: \n{e}')
 
 def prt(message, pointer):
