@@ -27,13 +27,13 @@ pointer = str(f'{SYMBOL}-{random.randint(1000, 9999)}')
 KLINES = 200
 MAX_PROFIT = 0
 
-file_url = 'deals_data/deals_data.json'
-if not os.path.exists(file_url):
-    my_file = open(file_url, "w")
-    my_file.write('[]')
-    my_file.close()
+# file_url = 'deals_data/deals_data.json'
+# if not os.path.exists(file_url):
+#     my_file = open(file_url, "w")
+#     my_file.write('[]')
+#     my_file.close()
 
-send_photo_file(file_url)
+# send_photo_file(file_url)
 
 DEAL = {}
 STAT = {'start': datetime.datetime.now() + datetime.timedelta(hours=7), 'positive': 0, 'negative': 0, 'balance': 0}
@@ -48,14 +48,14 @@ def main(step):
     global MAX_PROFIT
     global SYMBOL
 
-    SYMBOL = check_diff(pointer, SYMBOL_LIST) if SYMBOL == '' else SYMBOL
-
     if step == 1:
         prt(f'\nПлюсовых: {STAT["positive"]} '
             f'\nМинусовых: {STAT["negative"]} '
             f'\nprofit %: {round(STAT["balance"], 2)}, '
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущая сделка: {DEAL}', pointer)
+
+    SYMBOL = check_diff(pointer, SYMBOL_LIST) if SYMBOL == '' else SYMBOL
 
     if SYMBOL:
         current_price = get_symbol_price(SYMBOL)
@@ -110,11 +110,11 @@ def main(step):
                         DEAL['max profit'] = MAX_PROFIT
                         prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
 
-                        with open(file_url, "r") as file:
-                            data = json.load(file)
-                        data.append(DEAL)
-                        with open(file_url, "w") as file:
-                            json.dump(data, file)
+                        # with open(file_url, "r") as file:
+                        #     data = json.load(file)
+                        # data.append(DEAL)
+                        # with open(file_url, "w") as file:
+                        #     json.dump(data, file)
 
                         DEAL = {}
                         STEP_STOP_PRICE = None
