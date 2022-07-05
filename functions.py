@@ -6,9 +6,10 @@ from pathlib import Path
 import os
 from binance import Client
 from futures_sign import send_signed_request
-from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, sma, get_sma_slope
+from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma, get_sma_slope
 import numpy as np
 import datetime as dt
+import random
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -58,37 +59,22 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         df = prepareDF(df)
         df = get_rsi(df)
         df = get_bollinger_bands(df)
-        df = get_atr(df, 14)
 
-        df['SMA_100'] = sma(df['close'], 100)
-        df['slope'] = get_sma_slope(df['SMA_100'], 14)
         signal = ""  # return value
         i = KLINES - 1
 
-        if df['slope'][i] > -10:
-            if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and \
-                    df['RSI'][i - 2] < 32 and df['ATR'][i] > 1.5:
-                signal = 'long'
-                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
+        # if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and \
+        #         df['RSI'][i - 2] < 32 and df['ATR'][i] > 1.5:
+        #     signal = 'long'
+        #
 
-        if df['slope'][i] > 10:
-            if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1]:
-                signal = 'long'
-                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
-
-        if df['slope'][i] < 10:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] and df['RSI'][i - 2] > 68\
-                    and df['ATR'][i] > 1.5:
+        if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
+            if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
                 signal = 'short'
-                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
-
-        if df['slope'][i] < -10:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
-                signal = 'short'
-                prt(f"угол наклона sma100: {df['slope'][i]}", pointer)
+            else:
+                return 'reboot'
 
         if signal != '':
-            DEAL['SMA_100 slope 14'] = df['slope'][i]
             DEAL['close i-2'] = df['close'][i - 2]
             DEAL['close i-1'] = df['close'][i - 1]
             DEAL['close i'] = df['close'][i]
@@ -98,8 +84,8 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
             DEAL['upper_band i-1'] = df['upper_band'][i - 1]
             DEAL['RSI i-1'] = df['RSI'][i - 1]
             DEAL['RSI i-2'] = df['RSI'][i - 2]
-            DEAL['ATR i'] = df['ATR'][i]
         return signal
+
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
 
@@ -290,7 +276,55 @@ def telegram_bot_sendtext(bot_message):
         print(f'Ошибка отправки сообщения в телеграм: \n{e}')
 
 
+def parce_val():
+    x = requests.get('https://fapi.binance.com/fapi/v1/ticker/price')
+    val_json = x.json()
+    work_list = []
+    for item in val_json:
+        if 'USDT' in item['symbol']:
+            work_list.append(item['symbol'])
+    time.sleep(1)
+    return work_list
+
+
+def get_last_intersection(DF, SMA_1, SMA_2):
+    ints_list = None
+    trend = ''
+    for i in range(SMA_2, len(DF)):
+        prev_delta_sma = DF[f'SMA_{SMA_1}'][i - 2] < DF[f'SMA_{SMA_2}'][i - 2]
+        cur_delta_sma = DF[f'SMA_{SMA_1}'][i - 1] > DF[f'SMA_{SMA_2}'][i - 1]
+
+        if (prev_delta_sma and cur_delta_sma):
+            trend = 'long'
+            ints_list = i
+        elif (not prev_delta_sma and not cur_delta_sma):
+            trend = 'short'
+            ints_list = i
+
+    if trend:
+        return trend, len(DF) - ints_list, DF['open'][ints_list]
+    else:
+        'no intersections'
+
+
+def check_diff(pointer, SYMBOL_LIST):
+    symbol_list = parce_val() if SYMBOL_LIST == [] else SYMBOL_LIST
+    for i in symbol_list:
+        DF = get_futures_klines(i, 100, pointer, 1)
+        DF = prepareDF(DF)
+        DF['SMA_9'] = get_sma(DF['close'], 9)
+        DF['SMA_31'] = get_sma(DF['close'], 31)
+        DF = get_rsi(DF)
+        DF = get_bollinger_bands(DF)
+
+        res = get_last_intersection(DF, 9, 31)
+        if res[0] == 'long':
+            cur_price = get_symbol_price(i)
+            if 1 - res[2] / cur_price >= 0.5 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
+                return i
+    return ''
+
+
 def prt(message, pointer):
-    # telegram message
     telegram_bot_sendtext(pointer + ': ' + message)
     print(pointer + ': ' + message)
