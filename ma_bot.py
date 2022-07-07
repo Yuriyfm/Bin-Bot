@@ -9,6 +9,8 @@ from functions import get_symbol_price, get_wallet_balance, open_position, close
     get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt, check_if_signal, get_current_atr
 from binance import Client
 
+from telegramBot import send_photo_file
+
 load_dotenv()
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -29,6 +31,8 @@ if not os.path.exists(file_url):
     my_file = open(file_url, "w")
     my_file.write('[]')
     my_file.close()
+
+send_photo_file(file_url)
 
 DEAL = {}
 STAT = {'start': datetime.datetime.now() + datetime.timedelta(hours=7), 'positive': 0, 'negative': 0, 'balance': 0}
