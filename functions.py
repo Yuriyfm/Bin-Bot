@@ -288,7 +288,7 @@ def parce_val():
 
 
 def get_last_intersection(DF, SMA_1, SMA_2):
-    ints_list = None
+    ints_list = 0
     trend = ''
     for i in range(SMA_2, len(DF)):
         prev_delta_sma = DF[f'SMA_{SMA_1}'][i - 2] < DF[f'SMA_{SMA_2}'][i - 2]
@@ -301,35 +301,33 @@ def get_last_intersection(DF, SMA_1, SMA_2):
             trend = 'short'
             ints_list = i
 
-    if trend:
-        return trend, len(DF) - ints_list, DF['open'][ints_list]
-    else:
-        ['no intersections']
+    print(ints_list)
+    return trend, len(DF) - ints_list, DF['open'][ints_list]
 
 
-def check_diff(pointer, SYMBOL_LIST):
-    try:
-        symbol_list = parce_val() if SYMBOL_LIST == [] else SYMBOL_LIST
+def check_diff(pointer, SMA_1, SMA_2):
+        symbol_list = parce_val()
         for i in symbol_list:
-            DF = get_futures_klines(i, 100, pointer, 1)
-            DF = prepareDF(DF)
-            DF['SMA_9'] = get_sma(DF['close'], 9)
-            DF['SMA_31'] = get_sma(DF['close'], 31)
-            DF = get_rsi(DF)
-            DF = get_bollinger_bands(DF)
+            try:
+                DF = get_futures_klines(i, 100, pointer, 1)
+                DF = prepareDF(DF)
+                DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
+                DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
+                DF = get_rsi(DF)
+                DF = get_bollinger_bands(DF)
+                res = get_last_intersection(DF, SMA_1, SMA_2)
 
-            res = get_last_intersection(DF, 9, 31)
-
-            if res[0] == 'long':
-                cur_price = get_symbol_price(i)
-                print(i, 1 - res[2] / cur_price)
-                if 1 - res[2] / cur_price >= 0.06 and DF['RSI'][-1] > 70 and DF['close'][-1] > DF['upper_band'][-1]:
-                    prt(f'выбрал валюту {i}', pointer)
-                    return i
+                if res[0] == 'long':
+                    cur_price = get_symbol_price(i)
+                    print(i, 1 - res[2] / cur_price)
+                    if 1 - (res[2] / cur_price) >= 0.05 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                        prt(f'выбрал валюту {i}', pointer)
+                        return i
+            except Exception as e:
+                prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
+                print(f'Ошибка в функции выбора валюты: \n{e}')
         return ''
-    except Exception as e:
-        prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
-        print(f'Ошибка в функции выбора валюты: \n{e}')
+
 
 
 def prt(message, pointer):

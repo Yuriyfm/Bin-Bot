@@ -26,6 +26,8 @@ ATR_RATE = 0.25
 pointer = str(f'{random.randint(1000, 9999)}')
 KLINES = 200
 MAX_PROFIT = 0
+SMA_1 = 9
+SMA_2 = 31
 
 # file_url = 'deals_data/deals_data.json'
 # if not os.path.exists(file_url):
@@ -56,7 +58,7 @@ def main(step):
             f'\nТекущая сделка: {DEAL}', pointer)
 
     while SYMBOL == '':
-        SYMBOL = check_diff(pointer, SYMBOL_LIST)
+        SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
 
     current_price = get_symbol_price(SYMBOL)
