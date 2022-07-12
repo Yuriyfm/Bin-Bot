@@ -60,13 +60,18 @@ def main(step):
     if SYMBOL == '':
         SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
+    prt('get price', pointer)
     current_price = get_symbol_price(SYMBOL, pointer)
+    prt('get tick size dict', pointer)
     TICK_SIZE_DICT = parce_tick_size(pointer)
+    prt('get price precision', pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
+    prt('get cur atr', pointer)
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
 
     try:
         getTPSLfrom_telegram(SYMBOL)
+        prt('get opened positions', pointer)
         position = get_opened_positions(SYMBOL, pointer)
         open_sl = position[0]
         if open_sl == "":  # no position
@@ -74,13 +79,16 @@ def main(step):
                 prt(f'Идет отслеживание валюты: {SYMBOL}, ', pointer)
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
+            prt('check signal', pointer)
             signal = check_if_signal(SYMBOL,  pointer, KLINES, DEAL)
+            prt(f'check signal res - {signal}', pointer)
             if signal == 'restart':
                 SYMBOL = ''
             if signal == 'short':
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.1 / current_price, price_precision)
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
+                prt(f'try open position', pointer)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, price_precision, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
