@@ -21,12 +21,15 @@ client = Client(KEY, SECRET)
 
 # функция получает на вход название валюты, возвращает её текущую стоимость
 # client.get_all_tickers() - получить информацию о монетах (доступных для ввода и вывода) для пользователя
-def get_symbol_price(symbol):
-    response = requests.get(f'https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}')
-    if response.status_code == 200:
-        x = response.json()
-        current_price = float(x['price'])
-        return current_price
+def get_symbol_price(symbol, pointer):
+    try:
+        response = requests.get(f'https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}')
+        if response.status_code == 200:
+            x = response.json()
+            current_price = float(x['price'])
+            return current_price
+    except Exception as e:
+        prt(f'Ошибка при получении текущего курса валюты: \n{e}', pointer)
 
 
 def get_wallet_balance():
@@ -111,7 +114,7 @@ def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
 def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
     try:
-        sprice = get_symbol_price(symbol)
+        sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
             close_price = str(round(sprice * (1 + stop_percent), round_n))
@@ -157,7 +160,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
 
 def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
     try:
-        sprice = get_symbol_price(symbol)
+        sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
             close_price = str(round(sprice * (1 - stop_percent), 2))
@@ -226,11 +229,14 @@ def prepareDF(DF):
 
 
 def get_current_atr(symbol, pointer):
-    df = get_futures_klines(symbol, 13, pointer, 1)
-    df = prepareDF(df)
-    df = get_atr(df, 12)
-    cur_atr = df['ATR'][12]
-    return cur_atr
+    try:
+        df = get_futures_klines(symbol, 13, pointer, 1)
+        df = prepareDF(df)
+        df = get_atr(df, 12)
+        cur_atr = df['ATR'][12]
+        return cur_atr
+    except Exception as e:
+        prt(f'Ошибка при получении текущего atr: \n{e}', pointer)
 
 
 telegram_delay = 12
@@ -308,43 +314,45 @@ def get_last_intersection(DF, SMA_1, SMA_2):
 
 
 def check_diff(pointer, SMA_1, SMA_2):
-        symbol_list = parce_val()
-        while True:
-            for i in symbol_list:
-                try:
-                    DF = get_futures_klines(i, 100, pointer, 1)
-                    DF = prepareDF(DF)
-                    DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
-                    DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
-                    DF = get_rsi(DF)
-                    DF = get_bollinger_bands(DF)
-                    res = get_last_intersection(DF, SMA_1, SMA_2)
-                    print(i)
-                    if res[0] == 'long':
-                        cur_price = get_symbol_price(i)
-                        if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
-                            prt(f'выбрал валюту {i}', pointer)
-                            print(f'выбрал валюту {i}')
-                            return i
-                except Exception as e:
-                    prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
-                    print(f'Ошибка в функции выбора валюты: \n{e}')
-            prt('нет подходящих валют', pointer)
+    symbol_list = parce_val()
+    while True:
+        for i in symbol_list:
+            try:
+                DF = get_futures_klines(i, 100, pointer, 1)
+                DF = prepareDF(DF)
+                DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
+                DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
+                DF = get_rsi(DF)
+                DF = get_bollinger_bands(DF)
+                res = get_last_intersection(DF, SMA_1, SMA_2)
+                print(i)
+                if res[0] == 'long':
+                    cur_price = get_symbol_price(i, pointer)
+                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                        prt(f'выбрал валюту {i}', pointer)
+                        print(f'выбрал валюту {i}')
+                        return i
+            except Exception as e:
+                prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
+                print(f'Ошибка в функции выбора валюты: \n{e}')
+        prt('нет подходящих валют', pointer)
 
 
-
-def parce_tick_size():
-    x = requests.get(f'https://fapi.binance.com/fapi/v1/exchangeInfo')
-    ts_json = x.json()
-    work_dict = {}
-    for item in ts_json['symbols']:
-        if 'USDT' in item['symbol']:
-            work_dict[item['symbol']] = {
-                'pricePrecision': item['pricePrecision'],
-                'quantityPrecision': item['quantityPrecision']
-            }
-    time.sleep(1)
-    return work_dict
+def parce_tick_size(pointer):
+    try:
+        x = requests.get(f'https://fapi.binance.com/fapi/v1/exchangeInfo')
+        ts_json = x.json()
+        work_dict = {}
+        for item in ts_json['symbols']:
+            if 'USDT' in item['symbol']:
+                work_dict[item['symbol']] = {
+                    'pricePrecision': item['pricePrecision'],
+                    'quantityPrecision': item['quantityPrecision']
+                }
+        time.sleep(1)
+        return work_dict
+    except Exception as e:
+        prt(f'Ошибка при получении данных по tick size: \n{e}', pointer)
 
 
 def prt(message, pointer):
