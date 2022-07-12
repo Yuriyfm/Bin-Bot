@@ -29,7 +29,7 @@ def get_symbol_price(symbol, pointer):
             current_price = float(x['price'])
             return current_price
     except Exception as e:
-        prt(f'Ошибка при получении текущего курса валюты: \n{e}', pointer)
+        prt(f'Ошибка при получении текущего курса валюты: \n{e.__traceback__}', pointer)
 
 
 def get_wallet_balance():
@@ -53,7 +53,7 @@ def get_futures_klines(symbol, limit, pointer, time_frame):
         df['volume'] = df['volume'].astype(float)
         return df
     except Exception as e:
-        prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
+        prt(f'Ошибка при получении истории последних свечей: \n{e.__traceback__}', pointer)
 
 
 def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
@@ -93,7 +93,7 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         return signal
 
     except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
+        prt(f'Ошибка в функции проверки сигнала: \n{e.__traceback__}', pointer)
 
 
 def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
@@ -151,7 +151,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка открытия позиции: \n{e}', pointer)
+        prt(f'Ошибка открытия позиции: \n{e.__traceback__}', pointer)
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
@@ -189,7 +189,7 @@ def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
             response = send_signed_request('POST', '/fapi/v1/order', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка закрытия позиции: \n{e}', pointer)
+        prt(f'Ошибка закрытия позиции: \n{e.__traceback__}', pointer)
 
 
 def get_opened_positions(symbol, pointer):
@@ -209,7 +209,7 @@ def get_opened_positions(symbol, pointer):
             pos = ""
         return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
     except Exception as e:
-        prt(f'Ошибка при получении данных по открытой позиции: \n{e}', pointer)
+        prt(f'Ошибка при получении данных по открытой позиции: \n{e.__traceback__}', pointer)
 
 
 # Close all orders
@@ -236,7 +236,7 @@ def get_current_atr(symbol, pointer):
         cur_atr = df['ATR'][12]
         return cur_atr
     except Exception as e:
-        prt(f'Ошибка при получении текущего atr: \n{e}', pointer)
+        prt(f'Ошибка при получении текущего atr: \n{e.__traceback__}', pointer)
 
 
 telegram_delay = 12
@@ -271,7 +271,7 @@ def getTPSLfrom_telegram(pointer):
                 #     close_position(SYMBOL, open_sl, abs(quantity), stop_percent, 3, pointer)
                 #     prt('Позиция закрыта в ручном режиме', pointer)
     except Exception as e:
-        print(f'Ошибка подключения к телеграм: \n{e}')
+        print(f'Ошибка подключения к телеграм: \n{e.__traceback__}')
 
 
 def telegram_bot_sendtext(bot_message):
@@ -282,7 +282,7 @@ def telegram_bot_sendtext(bot_message):
         response = requests.get(send_text)
         return response.json()
     except Exception as e:
-        print(f'Ошибка отправки сообщения в телеграм: \n{e}')
+        print(f'Ошибка отправки сообщения в телеграм: \n{e.__traceback__}')
 
 
 def parce_val():
@@ -333,8 +333,8 @@ def check_diff(pointer, SMA_1, SMA_2):
                         print(f'выбрал валюту {i}')
                         return i
             except Exception as e:
-                prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
-                print(f'Ошибка в функции выбора валюты: \n{e}')
+                prt(f'Ошибка в функции выбора валюты: \n{e.__traceback__}', pointer)
+                print(f'Ошибка в функции выбора валюты: \n{e.__traceback__}')
         prt('нет подходящих валют', pointer)
 
 
@@ -346,13 +346,13 @@ def parce_tick_size(pointer):
         for item in ts_json['symbols']:
             if 'USDT' in item['symbol']:
                 work_dict[item['symbol']] = {
-                    'pricePrecision': item['pricePrecision'],
-                    'quantityPrecision': item['quantityPrecision']
+                    'price_precision': item['pricePrecision'],
+                    'quantity_precision': item['quantityPrecision']
                 }
         time.sleep(1)
         return work_dict
     except Exception as e:
-        prt(f'Ошибка при получении данных по tick size: \n{e}', pointer)
+        prt(f'Ошибка при получении данных по tick size: \n{e.__traceback__}', pointer)
 
 
 def prt(message, pointer):
