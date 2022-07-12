@@ -62,7 +62,7 @@ def main(step):
 
     current_price = get_symbol_price(SYMBOL, pointer)
     TICK_SIZE_DICT = parce_tick_size(pointer)
-    price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision']
+    price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
 
     try:
