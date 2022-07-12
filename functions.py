@@ -318,11 +318,12 @@ def check_diff(pointer, SMA_1, SMA_2):
                 DF = get_rsi(DF)
                 DF = get_bollinger_bands(DF)
                 res = get_last_intersection(DF, SMA_1, SMA_2)
+                print(i)
                 if res[0] == 'long':
                     cur_price = get_symbol_price(i)
                     if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
-                        print(f'выбрал валюту {i}')
                         prt(f'выбрал валюту {i}', pointer)
+                        print(f'выбрал валюту {i}')
                         return i
             except Exception as e:
                 prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
