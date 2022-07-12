@@ -70,20 +70,23 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
 
         if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
             if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
-                signal = 'short'
-            else:
-                return 'reboot'
+                prt('сигнал на short', pointer)
+                return 'short'
 
-        if signal != '':
-            DEAL['close i-2'] = df['close'][i - 2]
-            DEAL['close i-1'] = df['close'][i - 1]
-            DEAL['close i'] = df['close'][i]
-            DEAL['lower_band i-2'] = df['lower_band'][i - 2]
-            DEAL['lower_band i-1'] = df['lower_band'][i - 1]
-            DEAL['upper_band i-2'] = df['upper_band'][i - 2]
-            DEAL['upper_band i-1'] = df['upper_band'][i - 1]
-            DEAL['RSI i-1'] = df['RSI'][i - 1]
-            DEAL['RSI i-2'] = df['RSI'][i - 2]
+        if df['close'][i - 1] < df['upper_band'][i - 1]:
+            prt('ниже линии Боллинджера но не совпали условия', pointer)
+            return 'restart'
+
+        # if signal == 'long':
+        #     DEAL['close i-2'] = df['close'][i - 2]
+        #     DEAL['close i-1'] = df['close'][i - 1]
+        #     DEAL['close i'] = df['close'][i]
+        #     DEAL['lower_band i-2'] = df['lower_band'][i - 2]
+        #     DEAL['lower_band i-1'] = df['lower_band'][i - 1]
+        #     DEAL['upper_band i-2'] = df['upper_band'][i - 2]
+        #     DEAL['upper_band i-1'] = df['upper_band'][i - 1]
+        #     DEAL['RSI i-1'] = df['RSI'][i - 1]
+        #     DEAL['RSI i-2'] = df['RSI'][i - 2]
         return signal
 
     except Exception as e:
@@ -111,7 +114,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
         sprice = get_symbol_price(symbol)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), 2))
+            close_price = str(round(sprice * (1 + stop_percent), round_n))
             params = {
                 "batchOrders": [
                     {
@@ -223,10 +226,10 @@ def prepareDF(DF):
 
 
 def get_current_atr(symbol, pointer):
-    df = get_futures_klines(symbol, 15, pointer, 1)
+    df = get_futures_klines(symbol, 13, pointer, 1)
     df = prepareDF(df)
-    df = get_atr(df, 14)
-    cur_atr = df['ATR'][14]
+    df = get_atr(df, 12)
+    cur_atr = df['ATR'][12]
     return cur_atr
 
 
@@ -294,14 +297,13 @@ def get_last_intersection(DF, SMA_1, SMA_2):
         prev_delta_sma = DF[f'SMA_{SMA_1}'][i - 2] < DF[f'SMA_{SMA_2}'][i - 2]
         cur_delta_sma = DF[f'SMA_{SMA_1}'][i - 1] > DF[f'SMA_{SMA_2}'][i - 1]
 
-        if (prev_delta_sma and cur_delta_sma):
+        if prev_delta_sma and cur_delta_sma:
             trend = 'long'
             ints_list = i
-        elif (not prev_delta_sma and not cur_delta_sma):
+        elif not prev_delta_sma and not cur_delta_sma:
             trend = 'short'
             ints_list = i
 
-    print(ints_list)
     return trend, len(DF) - ints_list, DF['open'][ints_list]
 
 
@@ -316,11 +318,10 @@ def check_diff(pointer, SMA_1, SMA_2):
                 DF = get_rsi(DF)
                 DF = get_bollinger_bands(DF)
                 res = get_last_intersection(DF, SMA_1, SMA_2)
-
                 if res[0] == 'long':
                     cur_price = get_symbol_price(i)
-                    print(i, 1 - res[2] / cur_price)
-                    if 1 - (res[2] / cur_price) >= 0.05 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                        print(f'выбрал валюту {i}')
                         prt(f'выбрал валюту {i}', pointer)
                         return i
             except Exception as e:
@@ -328,6 +329,19 @@ def check_diff(pointer, SMA_1, SMA_2):
                 print(f'Ошибка в функции выбора валюты: \n{e}')
         return ''
 
+
+def parce_tick_size():
+    x = requests.get(f'https://fapi.binance.com/fapi/v1/exchangeInfo')
+    ts_json = x.json()
+    work_dict = {}
+    for item in ts_json['symbols']:
+        if 'USDT' in item['symbol']:
+            work_dict[item['symbol']] = {
+                'pricePrecision': item['pricePrecision'],
+                'quantityPrecision': item['quantityPrecision']
+            }
+    time.sleep(1)
+    return work_dict
 
 
 def prt(message, pointer):

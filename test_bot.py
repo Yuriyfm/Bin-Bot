@@ -8,6 +8,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 
+df = get_futures_klines('ETH', 100, 'W', 1)
 
 
 
