@@ -57,55 +57,54 @@ def main(step):
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущая сделка: {DEAL}', pointer)
 
-    while SYMBOL == '':
+    if SYMBOL == '':
         SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
     current_price = get_symbol_price(SYMBOL)
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 5)
     TICK_SIZE_DICT = parce_tick_size()
-    pricePrecision = TICK_SIZE_DICT[SYMBOL]['pricePrecision']
+    price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision']
 
     try:
         getTPSLfrom_telegram(SYMBOL)
         position = get_opened_positions(SYMBOL, pointer)
         open_sl = position[0]
         if open_sl == "":  # no position
+            if step % 60 == 0:
+                prt(f'Идет отслеживание валюты: {SYMBOL}, ', pointer)
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, KLINES, DEAL)
             if signal == 'restart':
                 SYMBOL = ''
-            if signal == 'long':
+            if signal == 'short':
                 balance = get_wallet_balance()
                 max_position = round(balance * 0.1 / current_price, 3)
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
-                open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, pricePrecision, pointer)
+                open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, 3, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
-                STOP_PRICE = current_price * (1 - atr_stop_percent * ATR_RATE)
+                STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
                 prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, 2)}$, по курсу {current_price}', pointer)
 
         else:
             entry_price = position[5]  # enter price
             quantity = position[1]
 
-            if open_sl == 'long':
+            if open_sl == 'short':
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
-                if current_price * (1 - atr_stop_percent * ATR_RATE) > STOP_PRICE:
-                    STOP_PRICE = current_price * (1 - atr_stop_percent * ATR_RATE)
-                    MAX_PROFIT = round((current_price / entry_price - 1) * 100, 2) if round((current_price / entry_price - 1) * 100, 2) > MAX_PROFIT else MAX_PROFIT
+                if current_price * (1 + atr_stop_percent * ATR_RATE) < STOP_PRICE:
+                    STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
+                    MAX_PROFIT = round((1 - current_price / entry_price) * 100, 2) if round((1 - current_price / entry_price) * 100, 2) > MAX_PROFIT else MAX_PROFIT
                 if step % 60 == 0:
-                    print(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                          f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
-                          f'\nATR: {round(atr_stop_percent * 100, 2)}')
-                    prt(f'long\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
-                        f'\nТекущий %:{round((current_price /  entry_price - 1) * 100, 2)}'
+                    prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, 2)},'
+                        f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, 2)}'
                         f'\nATR: {round(atr_stop_percent * 100, 2)}', pointer)
-                if current_price < STOP_PRICE:
+                if current_price > STOP_PRICE:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), pricePrecision), atr_stop_percent * ATR_RATE,  pointer)
-                    profit = round(((current_price / entry_price - 1) * 100) - 0.045, 3)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), 3), atr_stop_percent * ATR_RATE,  pointer)
+                    profit = round(((current_price / entry_price - 1) * -100) - 0.045, 3)
                     if profit > 0:
                         STAT['positive'] += 1
                     else:

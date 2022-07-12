@@ -74,7 +74,7 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
                 return 'short'
 
         if df['close'][i - 1] < df['upper_band'][i - 1]:
-            prt('ниже линии Боллинджера но не совпали условия', pointer)
+            prt('ниже линии Боллинджера, не совпали условия', pointer)
             return 'restart'
 
         # if signal == 'long':
@@ -309,26 +309,28 @@ def get_last_intersection(DF, SMA_1, SMA_2):
 
 def check_diff(pointer, SMA_1, SMA_2):
         symbol_list = parce_val()
-        for i in symbol_list:
-            try:
-                DF = get_futures_klines(i, 100, pointer, 1)
-                DF = prepareDF(DF)
-                DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
-                DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
-                DF = get_rsi(DF)
-                DF = get_bollinger_bands(DF)
-                res = get_last_intersection(DF, SMA_1, SMA_2)
-                print(i)
-                if res[0] == 'long':
-                    cur_price = get_symbol_price(i)
-                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
-                        prt(f'выбрал валюту {i}', pointer)
-                        print(f'выбрал валюту {i}')
-                        return i
-            except Exception as e:
-                prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
-                print(f'Ошибка в функции выбора валюты: \n{e}')
-        return ''
+        while True:
+            for i in symbol_list:
+                try:
+                    DF = get_futures_klines(i, 100, pointer, 1)
+                    DF = prepareDF(DF)
+                    DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
+                    DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
+                    DF = get_rsi(DF)
+                    DF = get_bollinger_bands(DF)
+                    res = get_last_intersection(DF, SMA_1, SMA_2)
+                    print(i)
+                    if res[0] == 'long':
+                        cur_price = get_symbol_price(i)
+                        if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                            prt(f'выбрал валюту {i}', pointer)
+                            print(f'выбрал валюту {i}')
+                            return i
+                except Exception as e:
+                    prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
+                    print(f'Ошибка в функции выбора валюты: \n{e}')
+            prt('нет подходящих валют', pointer)
+
 
 
 def parce_tick_size():
