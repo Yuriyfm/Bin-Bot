@@ -57,8 +57,8 @@ def main(step):
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущая сделка: {DEAL}', pointer)
 
-    # if SYMBOL == '':
-    #     SYMBOL = check_diff(pointer, SMA_1, SMA_2)
+    if SYMBOL == '':
+        SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
