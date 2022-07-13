@@ -28,7 +28,7 @@ KLINES = 200
 MAX_PROFIT = 0
 SMA_1 = 9
 SMA_2 = 31
-
+TICK_SIZE_DICT = parce_tick_size(pointer)
 # file_url = 'deals_data/deals_data.json'
 # if not os.path.exists(file_url):
 #     my_file = open(file_url, "w")
@@ -45,10 +45,10 @@ def main(step):
     global STEP_STOP_PRICE
     global STAT
     global DEAL
-    global max_position
     global STOP_PRICE
     global MAX_PROFIT
     global SYMBOL
+    global TICK_SIZE_DICT
 
     if step == 1:
         prt(f'\nПлюсовых: {STAT["positive"]} '
@@ -61,8 +61,8 @@ def main(step):
         SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
     current_price = get_symbol_price(SYMBOL, pointer)
-    TICK_SIZE_DICT = parce_tick_size(pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
+    quantity_precision = TICK_SIZE_DICT[SYMBOL]['quantity_precision'] if TICK_SIZE_DICT[SYMBOL]['quantity_precision'] != 0 else None
     atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
 
     try:
@@ -70,7 +70,7 @@ def main(step):
         position = get_opened_positions(SYMBOL, pointer)
         open_sl = position[0]
         if open_sl == "":  # no position
-            if step % 60 == 0:
+            if step % 6 == 0:
                 prt(f'Идет отслеживание валюты: {SYMBOL}, ', pointer)
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
@@ -79,7 +79,7 @@ def main(step):
                 SYMBOL = ''
             if signal == 'short':
                 balance = get_wallet_balance()
-                max_position = round(balance * 0.1 / current_price, price_precision)
+                max_position = round(balance * 0.1 / current_price, quantity_precision)
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 prt(f'try open position', pointer)
                 open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, price_precision, pointer)
@@ -98,13 +98,13 @@ def main(step):
                 if current_price * (1 + atr_stop_percent * ATR_RATE) < STOP_PRICE:
                     STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
                     MAX_PROFIT = round((1 - current_price / entry_price) * 100, price_precision) if round((1 - current_price / entry_price) * 100, price_precision) > MAX_PROFIT else MAX_PROFIT
-                if step % 60 == 0:
+                if step % 30 == 0:
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, price_precision)},'
                         f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, price_precision)}'
                         f'\nATR: {round(atr_stop_percent * 100, price_precision)}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), price_precision), atr_stop_percent * ATR_RATE,  pointer)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), atr_stop_percent * ATR_RATE, price_precision,  pointer)
                     profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
                     if profit > 0:
                         STAT['positive'] += 1

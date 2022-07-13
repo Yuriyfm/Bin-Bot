@@ -29,7 +29,7 @@ def get_symbol_price(symbol, pointer):
             current_price = float(x['price'])
             return current_price
     except Exception as e:
-        prt(f'Ошибка при получении текущего курса валюты: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка при получении текущего курса валюты: \n{e}', pointer)
 
 
 def get_wallet_balance():
@@ -53,7 +53,7 @@ def get_futures_klines(symbol, limit, pointer, time_frame):
         df['volume'] = df['volume'].astype(float)
         return df
     except Exception as e:
-        prt(f'Ошибка при получении истории последних свечей: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка при получении истории последних свечей: \n{e}', pointer)
 
 
 def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
@@ -66,34 +66,18 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         signal = ""  # return value
         i = KLINES - 1
 
-        # if df['close'][i - 2] < df['lower_band'][i - 2] and df['close'][i - 1] > df['lower_band'][i - 1] and \
-        #         df['RSI'][i - 2] < 32 and df['ATR'][i] > 1.5:
-        #     signal = 'long'
-        #
-
-        if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
-            if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
+        if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
+            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
                 prt('сигнал на short', pointer)
                 return 'short'
+            else:
+                prt('Не совпали условия по RSI и линиям Боллинджера', pointer)
+                return 'restart'
 
-        if df['close'][i - 1] < df['upper_band'][i - 1]:
-            prt('ниже линии Боллинджера, не совпали условия', pointer)
-            return 'restart'
-
-        # if signal == 'long':
-        #     DEAL['close i-2'] = df['close'][i - 2]
-        #     DEAL['close i-1'] = df['close'][i - 1]
-        #     DEAL['close i'] = df['close'][i]
-        #     DEAL['lower_band i-2'] = df['lower_band'][i - 2]
-        #     DEAL['lower_band i-1'] = df['lower_band'][i - 1]
-        #     DEAL['upper_band i-2'] = df['upper_band'][i - 2]
-        #     DEAL['upper_band i-1'] = df['upper_band'][i - 1]
-        #     DEAL['RSI i-1'] = df['RSI'][i - 1]
-        #     DEAL['RSI i-2'] = df['RSI'][i - 2]
         return signal
 
     except Exception as e:
-        prt(f'Ошибка в функции проверки сигнала: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
 
 
 def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
@@ -112,12 +96,12 @@ def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
 # собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
 # close_price - берет текущую цену + 1%. Зачем нужен?
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
-def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
+def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointer):
     try:
         sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), round_n))
+            close_price = str(round(sprice * (1 + stop_percent), price_precision))
             params = {
                 "batchOrders": [
                     {
@@ -135,7 +119,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 - stop_percent), 2))
+            close_price = str(round(sprice * (1 - stop_percent), price_precision))
             params = {
                 "batchOrders": [
                     {
@@ -151,19 +135,19 @@ def open_position(symbol, s_l, quantity_l, stop_percent, round_n, pointer):
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка открытия позиции: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка открытия позиции: \n{e}', pointer)
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
 # собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
-def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
+def close_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointer):
     try:
         sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - stop_percent), 2))
+            close_price = str(round(sprice * (1 - stop_percent), price_precision))
             params = {
                 "symbol": symbol,
                 "side": "SELL",
@@ -176,7 +160,7 @@ def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + stop_percent), 2))
+            close_price = str(round(sprice * (1 + stop_percent), price_precision))
             params = {
 
                 "symbol": symbol,
@@ -189,7 +173,7 @@ def close_position(symbol, s_l, quantity_l, stop_percent, pointer):
             response = send_signed_request('POST', '/fapi/v1/order', params)
             print(response)
     except Exception as e:
-        prt(f'Ошибка закрытия позиции: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка закрытия позиции: \n{e}', pointer)
 
 
 def get_opened_positions(symbol, pointer):
@@ -209,7 +193,7 @@ def get_opened_positions(symbol, pointer):
             pos = ""
         return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
     except Exception as e:
-        prt(f'Ошибка при получении данных по открытой позиции: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка при получении данных по открытой позиции: \n{e}', pointer)
 
 
 # Close all orders
@@ -236,7 +220,7 @@ def get_current_atr(symbol, pointer):
         cur_atr = df['ATR'][12]
         return cur_atr
     except Exception as e:
-        prt(f'Ошибка при получении текущего atr: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка при получении текущего atr: \n{e}', pointer)
 
 
 telegram_delay = 12
@@ -271,7 +255,7 @@ def getTPSLfrom_telegram(pointer):
                 #     close_position(SYMBOL, open_sl, abs(quantity), stop_percent, 3, pointer)
                 #     prt('Позиция закрыта в ручном режиме', pointer)
     except Exception as e:
-        print(f'Ошибка подключения к телеграм: \n{e.__traceback__}')
+        print(f'Ошибка подключения к телеграм: \n{e}')
 
 
 def telegram_bot_sendtext(bot_message):
@@ -282,7 +266,7 @@ def telegram_bot_sendtext(bot_message):
         response = requests.get(send_text)
         return response.json()
     except Exception as e:
-        print(f'Ошибка отправки сообщения в телеграм: \n{e.__traceback__}')
+        print(f'Ошибка отправки сообщения в телеграм: \n{e}')
 
 
 def parce_val():
@@ -325,7 +309,6 @@ def check_diff(pointer, SMA_1, SMA_2):
                 DF = get_rsi(DF)
                 DF = get_bollinger_bands(DF)
                 res = get_last_intersection(DF, SMA_1, SMA_2)
-                print(i)
                 if res[0] == 'long':
                     cur_price = get_symbol_price(i, pointer)
                     if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
@@ -333,9 +316,9 @@ def check_diff(pointer, SMA_1, SMA_2):
                         print(f'выбрал валюту {i}')
                         return i
             except Exception as e:
-                prt(f'Ошибка в функции выбора валюты: \n{e.__traceback__}', pointer)
-                print(f'Ошибка в функции выбора валюты: \n{e.__traceback__}')
-        prt('нет подходящих валют', pointer)
+                prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
+                print(f'Ошибка в функции выбора валюты: \n{e}')
+        print('нет подходящих валют')
 
 
 def parce_tick_size(pointer):
@@ -352,7 +335,7 @@ def parce_tick_size(pointer):
         time.sleep(1)
         return work_dict
     except Exception as e:
-        prt(f'Ошибка при получении данных по tick size: \n{e.__traceback__}', pointer)
+        prt(f'Ошибка при получении данных по tick size: \n{e}', pointer)
 
 
 def prt(message, pointer):
