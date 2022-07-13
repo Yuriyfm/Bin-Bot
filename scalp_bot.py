@@ -63,7 +63,7 @@ def main(step):
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
     quantity_precision = TICK_SIZE_DICT[SYMBOL]['quantity_precision'] if TICK_SIZE_DICT[SYMBOL]['quantity_precision'] != 0 else None
-    atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
+    atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
 
     try:
         getTPSLfrom_telegram(SYMBOL)
