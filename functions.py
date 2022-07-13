@@ -116,7 +116,8 @@ def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointe
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            print(response)
+            print(response.json())
+            prt(response.json(), pointer)
 
         if s_l == 'short':
             close_price = str(round(sprice * (1 - stop_percent), price_precision))
@@ -133,7 +134,8 @@ def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointe
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            print(response)
+            print(response.json())
+            prt(response.json(), pointer)
     except Exception as e:
         prt(f'Ошибка открытия позиции: \n{e}', pointer)
 
