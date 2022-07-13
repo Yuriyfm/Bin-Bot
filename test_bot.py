@@ -8,7 +8,7 @@ import datetime
 # load_dotenv(dotenv_path=env_path)
 # KEY = os.getenv("KEY")
 
-print(round(1.435346436, 0))
+print(str(1.4))
 
 
 

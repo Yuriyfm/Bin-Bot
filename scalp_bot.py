@@ -57,8 +57,8 @@ def main(step):
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущая сделка: {DEAL}', pointer)
 
-    if SYMBOL == '':
-        SYMBOL = check_diff(pointer, SMA_1, SMA_2)
+    # if SYMBOL == '':
+    #     SYMBOL = check_diff(pointer, SMA_1, SMA_2)
 
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
@@ -82,7 +82,7 @@ def main(step):
                 max_position = round(balance * 0.1 / current_price, quantity_precision)
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 prt(f'try open position', pointer)
-                open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, price_precision, pointer)
+                open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, quantity_precision, pointer)
                 DEAL['type'] = signal
                 DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                 DEAL['start price'] = current_price
@@ -104,7 +104,7 @@ def main(step):
                         f'\nATR: {round(atr_stop_percent * 100, price_precision)}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), atr_stop_percent * ATR_RATE, price_precision,  pointer)
+                    close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), atr_stop_percent * ATR_RATE, quantity_precision,  pointer)
                     profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
                     if profit > 0:
                         STAT['positive'] += 1

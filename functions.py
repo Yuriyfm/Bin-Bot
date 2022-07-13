@@ -4,12 +4,11 @@ import time
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+import json
 from binance import Client
 from futures_sign import send_signed_request
 from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma, get_sma_slope
-import numpy as np
-import datetime as dt
-import random
+
 
 load_dotenv()
 env_path = Path('.') / '.env'
@@ -96,12 +95,12 @@ def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
 # собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
 # close_price - берет текущую цену + 1%. Зачем нужен?
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
-def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointer):
+def open_position(symbol, s_l, quantity_l, stop_percent, quantity_precision, pointer):
     try:
         sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), price_precision))
+            close_price = str(round(sprice * (1 + stop_percent), quantity_precision))
             params = {
                 "batchOrders": [
                     {
@@ -120,7 +119,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointe
             prt(response.json(), pointer)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 - stop_percent), price_precision))
+            close_price = str(round(sprice * (1 - stop_percent), quantity_precision))
             params = {
                 "batchOrders": [
                     {
@@ -134,8 +133,7 @@ def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointe
                 ]
             }
             response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            print(response.json())
-            prt(response.json(), pointer)
+            print(json.JSONEncoder().encode(response))
     except Exception as e:
         prt(f'Ошибка открытия позиции: \n{e}', pointer)
 
@@ -144,12 +142,12 @@ def open_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointe
 # собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
-def close_position(symbol, s_l, quantity_l, stop_percent, price_precision, pointer):
+def close_position(symbol, s_l, quantity_l, stop_percent, quantity_precision, pointer):
     try:
         sprice = get_symbol_price(symbol, pointer)
 
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - stop_percent), price_precision))
+            close_price = str(round(sprice * (1 - stop_percent), quantity_precision))
             params = {
                 "symbol": symbol,
                 "side": "SELL",
@@ -162,7 +160,7 @@ def close_position(symbol, s_l, quantity_l, stop_percent, price_precision, point
             print(response)
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + stop_percent), price_precision))
+            close_price = str(round(sprice * (1 + stop_percent), quantity_precision))
             params = {
 
                 "symbol": symbol,
@@ -173,7 +171,7 @@ def close_position(symbol, s_l, quantity_l, stop_percent, price_precision, point
                 "price": close_price
             }
             response = send_signed_request('POST', '/fapi/v1/order', params)
-            print(response)
+            print(json.JSONEncoder().encode(response))
     except Exception as e:
         prt(f'Ошибка закрытия позиции: \n{e}', pointer)
 
