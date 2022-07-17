@@ -24,7 +24,7 @@ SYMBOL_LIST = []
 STOP_PRICE = 0
 ATR_RATE = 0.25
 pointer = str(f'{random.randint(1000, 9999)}')
-KLINES = 200
+KLINES = 100
 MAX_PROFIT = 0
 SMA_1 = 9
 SMA_2 = 31
@@ -58,7 +58,7 @@ def main(step):
             f'\nТекущая сделка: {DEAL}', pointer)
 
     if SYMBOL == '':
-        SYMBOL = check_diff(pointer, SMA_1, SMA_2)
+        SYMBOL = check_diff(pointer, SMA_1, SMA_2, KLINES)
 
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
@@ -82,12 +82,16 @@ def main(step):
                 max_position = round(balance * 0.1 / current_price, quantity_precision)
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
                 prt(f'try open position', pointer)
-                open_position(SYMBOL, signal, max_position, atr_stop_percent * ATR_RATE, quantity_precision, pointer)
-                DEAL['type'] = signal
-                DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
-                DEAL['start price'] = current_price
-                STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
-                prt(f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, price_precision)}$, по курсу {current_price}', pointer)
+                open_position_res = open_position(SYMBOL, signal, max_position, pointer)
+                if open_position_res:
+                    prt(
+                        f'Открыл {signal} {max_position}{SYMBOL} на {round(max_position * current_price, price_precision)}$, по курсу {current_price}',
+                        pointer)
+                    DEAL['type'] = signal
+                    DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
+                    DEAL['start price'] = current_price
+                    STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
+
 
         else:
             entry_price = position[5]  # enter price
@@ -104,18 +108,20 @@ def main(step):
                         f'\nATR: {round(atr_stop_percent * 100, price_precision)}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
-                    close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), atr_stop_percent * ATR_RATE, quantity_precision,  pointer)
-                    profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
-                    if profit > 0:
-                        STAT['positive'] += 1
-                    else:
-                        STAT['negative'] += 1
-                    STAT['balance'] += profit
-                    DEAL['profit'] = profit
-                    DEAL['finish price'] = current_price
-                    DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
-                    DEAL['max profit'] = MAX_PROFIT
-                    prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
+                    close_postion_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
+                    if close_postion_res:
+                        profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
+                        prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
+                        if profit > 0:
+                            STAT['positive'] += 1
+                        else:
+                            STAT['negative'] += 1
+                        STAT['balance'] += profit
+                        DEAL['profit'] = profit
+                        DEAL['finish price'] = current_price
+                        DEAL['finish time'] = now.strftime("%d-%m-%Y %H:%M")
+                        DEAL['max profit'] = MAX_PROFIT
+
 
                     # with open(file_url, "r") as file:
                     #     data = json.load(file)

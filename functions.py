@@ -4,7 +4,7 @@ import time
 from dotenv import load_dotenv
 from pathlib import Path
 import os
-import json
+import traceback
 from binance import Client
 from futures_sign import send_signed_request
 from indicators import get_atr, get_slope, get_rsi, get_bollinger_bands, ao, get_sma, get_sma_slope
@@ -67,8 +67,9 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
 
         if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
             if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
-                prt('сигнал на short', pointer)
-                return 'short'
+                if df['close'][i - 1] < df['close'][i - 2] > df['close'][i - 3] > df['close'][i - 4]:
+                    prt('сигнал на short', pointer)
+                    return 'short'
             else:
                 prt('Не совпали условия по RSI и линиям Боллинджера', pointer)
                 return 'restart'
@@ -95,85 +96,71 @@ def check_stop_price(SYMBOL, KLINES, pointer, deal_type):
 # собирает параметры и отправляет POST запрос с параметрами для открытия позиции на /fapi/v1/batchOrders
 # close_price - берет текущую цену + 1%. Зачем нужен?
 # batchOrders — список параметров заказа в формате JSON. https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
-def open_position(symbol, s_l, quantity_l, stop_percent, quantity_precision, pointer):
+def open_position(symbol, s_l, quantity_l, pointer):
     try:
-        sprice = get_symbol_price(symbol, pointer)
+        if (s_l == 'long'):
+            open_result = client.futures_create_order(
+                symbol=symbol,
+                type='MARKET',
+                # type='LIMIT',
+                # price=current_price,
+                # timeInForce='GTC',
+                side='BUY',
+                quantity=quantity_l
+            )
+            return True
 
-        if s_l == 'long':
-            close_price = str(round(sprice * (1 + stop_percent), quantity_precision))
-            params = {
-                "batchOrders": [
-                    {
-                        "symbol": symbol,
-                        "side": "BUY",
-                        "type": "LIMIT",
-                        "quantity": str(quantity_l),
-                        "timeInForce": "GTC",
-                        "price": close_price
+        if (s_l == 'short'):
+            # close_price = str(round(sprice * (1 - 0.01), 2))
+            open_result = client.futures_create_order(
+                symbol=symbol,
+                type='MARKET',
+                # type='LIMIT',
+                # price=current_price,
+                # timeInForce='GTC',
+                side='SELL',
+                quantity=quantity_l
+            )
+            return True
 
-                    }
-                ]
-            }
-            response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            print(response.json())
-            prt(response.json(), pointer)
-
-        if s_l == 'short':
-            close_price = str(round(sprice * (1 - stop_percent), quantity_precision))
-            params = {
-                "batchOrders": [
-                    {
-                        "symbol": symbol,
-                        "side": "SELL",
-                        "type": "LIMIT",
-                        "quantity": str(quantity_l),
-                        "timeInForce": "GTC",
-                        "price": close_price
-                    }
-                ]
-            }
-            response = send_signed_request('POST', '/fapi/v1/batchOrders', params)
-            print(json.JSONEncoder().encode(response))
-    except Exception as e:
-        prt(f'Ошибка открытия позиции: \n{e}', pointer)
+    except Exception as error:
+        prt(f'Ошибка открытия позиции: {error}', pointer)
 
 
 # функция закрытия позиции принимает название валюты, тип сделки (short/long) и сумму ставки,
 # собирает параметры и отправляет POST-запрос с параметрами для закрытия позиции на /fapi/v1/order
 # https://binance-docs.github.io/apidocs/futures/en/#cancel-order-trade
 
-def close_position(symbol, s_l, quantity_l, stop_percent, quantity_precision, pointer):
+def close_position(symbol, s_l, quantity_l, pointer):
     try:
-        sprice = get_symbol_price(symbol, pointer)
-
         if s_l == 'long':
-            close_price = str(round(sprice * (1 - stop_percent), quantity_precision))
-            params = {
-                "symbol": symbol,
-                "side": "SELL",
-                "type": "LIMIT",
-                "quantity": str(quantity_l),
-                "timeInForce": "GTC",
-                "price": close_price
-            }
-            response = send_signed_request('POST', '/fapi/v1/order', params)
-            print(response)
+            # close_price = str(round(sprice * (1 - 0.01), 2))
+            close_result = client.futures_create_order(
+                symbol=symbol,
+                type='MARKET',
+                # type='LIMIT',
+                # price=current_price,
+                # timeInForce='GTC',
+                side='SELL',
+                quantity=quantity_l
+            )
+            return True
 
         if s_l == 'short':
-            close_price = str(round(sprice * (1 + stop_percent), quantity_precision))
-            params = {
+            # close_price = str(round(sprice * (1 + 0.01), 2))
+            close_result = client.futures_create_order(
+                symbol=symbol,
+                type='MARKET',
+                # type='LIMIT',
+                # price=current_price,
+                # timeInForce='GTC',
+                side='BUY',
+                quantity=quantity_l
+            )
+            return True
 
-                "symbol": symbol,
-                "side": "BUY",
-                "type": "LIMIT",
-                "quantity": str(quantity_l),
-                "timeInForce": "GTC",
-                "price": close_price
-            }
-            response = send_signed_request('POST', '/fapi/v1/order', params)
-            print(json.JSONEncoder().encode(response))
-    except Exception as e:
-        prt(f'Ошибка закрытия позиции: \n{e}', pointer)
+    except Exception as error:
+        prt(f'Ошибка закрытия позиции: {error}', pointer)
 
 
 def get_opened_positions(symbol, pointer):
@@ -281,28 +268,29 @@ def parce_val():
 
 
 def get_last_intersection(DF, SMA_1, SMA_2):
-    ints_list = 0
+    intersection_point = 0
     trend = ''
-    for i in range(SMA_2, len(DF)):
-        prev_delta_sma = DF[f'SMA_{SMA_1}'][i - 2] < DF[f'SMA_{SMA_2}'][i - 2]
-        cur_delta_sma = DF[f'SMA_{SMA_1}'][i - 1] > DF[f'SMA_{SMA_2}'][i - 1]
+    for i in range(len(DF) - 2):
+        prev_delta_sma = DF[f'SMA_{SMA_1}'][len(DF) - i - 2] < DF[f'SMA_{SMA_2}'][len(DF) - i - 2]
+        cur_delta_sma = DF[f'SMA_{SMA_1}'][len(DF) - i - 1] > DF[f'SMA_{SMA_2}'][len(DF) - i - 1]
 
         if prev_delta_sma and cur_delta_sma:
             trend = 'long'
-            ints_list = i
+            intersection_point = i
+            break
         elif not prev_delta_sma and not cur_delta_sma:
             trend = 'short'
-            ints_list = i
+            intersection_point = i
+            break
+    return trend, len(DF) - intersection_point - 1, DF['open'][len(DF) - intersection_point - 1]
 
-    return trend, len(DF) - ints_list, DF['open'][ints_list]
 
-
-def check_diff(pointer, SMA_1, SMA_2):
+def check_diff(pointer, SMA_1, SMA_2, KLINES):
     symbol_list = parce_val()
     while True:
         for i in symbol_list:
             try:
-                DF = get_futures_klines(i, 100, pointer, 1)
+                DF = get_futures_klines(i, KLINES, pointer, 1)
                 DF = prepareDF(DF)
                 DF[f'SMA_{SMA_1}'] = get_sma(DF['close'], SMA_1)
                 DF[f'SMA_{SMA_2}'] = get_sma(DF['close'], SMA_2)
@@ -311,13 +299,13 @@ def check_diff(pointer, SMA_1, SMA_2):
                 res = get_last_intersection(DF, SMA_1, SMA_2)
                 if res[0] == 'long':
                     cur_price = get_symbol_price(i, pointer)
-                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][99] > 70 and DF['close'][99] > DF['upper_band'][99]:
+                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][KLINES - 2] > 70 and DF['close'][KLINES - 2] > DF['upper_band'][KLINES - 2]:
                         prt(f'выбрал валюту {i}', pointer)
                         print(f'выбрал валюту {i}')
                         return i
             except Exception as e:
                 prt(f'Ошибка в функции выбора валюты: \n{e}', pointer)
-                print(f'Ошибка в функции выбора валюты: \n{e}')
+                print(traceback.format_exc())
         print('нет подходящих валют')
 
 
