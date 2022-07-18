@@ -6,8 +6,8 @@ import random
 import os
 import json
 from functions import get_symbol_price, get_wallet_balance, open_position, close_position, \
-    get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt, check_if_signal, get_current_atr, \
-    check_diff, parce_tick_size
+    get_opened_positions, check_and_close_orders, getTPSLfrom_telegram, prt, check_if_signal, \
+    check_diff, parce_tick_size, check_stop_price_condition
 from binance import Client
 
 from telegramBot import send_photo_file
@@ -22,7 +22,6 @@ client = Client(KEY, SECRET)
 SYMBOL_LIST = []
 
 STOP_PRICE = 0
-ATR_RATE = 0.25
 pointer = str(f'{random.randint(1000, 9999)}')
 KLINES = 100
 MAX_PROFIT = 0
@@ -42,7 +41,6 @@ STAT = {'start': datetime.datetime.now() + datetime.timedelta(hours=7), 'positiv
 
 
 def main(step):
-    global STEP_STOP_PRICE
     global STAT
     global DEAL
     global STOP_PRICE
@@ -63,7 +61,6 @@ def main(step):
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
     quantity_precision = TICK_SIZE_DICT[SYMBOL]['quantity_precision'] if TICK_SIZE_DICT[SYMBOL]['quantity_precision'] != 0 else None
-    atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
 
     try:
         getTPSLfrom_telegram(SYMBOL)
@@ -90,7 +87,7 @@ def main(step):
                     DEAL['type'] = signal
                     DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                     DEAL['start price'] = current_price
-                    STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
+
 
 
         else:
@@ -99,18 +96,14 @@ def main(step):
 
             if open_sl == 'short':
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
-                if current_price * (1 + atr_stop_percent * ATR_RATE) < STOP_PRICE:
-                    STOP_PRICE = current_price * (1 + atr_stop_percent * ATR_RATE)
-                    MAX_PROFIT = round((1 - current_price / entry_price) * 100, price_precision) if round((1 - current_price / entry_price) * 100, price_precision) > MAX_PROFIT else MAX_PROFIT
+                stop_condition = check_stop_price_condition(SYMBOL, KLINES, pointer)
                 if step % 30 == 0:
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, price_precision)},'
-                        f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, price_precision)}'
-                        f'\nATR: {round(atr_stop_percent * 100, price_precision)}', pointer)
-                prt(f'текущее положение: {current_price}, {STOP_PRICE}', pointer)
-                if current_price > STOP_PRICE:
+                        f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, price_precision)}', pointer)
+                if stop_condition:
                     # stop loss
-                    close_postion_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
-                    if close_postion_res:
+                    close_position_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
+                    if close_position_res:
                         profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
                         prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
                         if profit > 0:
@@ -131,7 +124,6 @@ def main(step):
                     #     json.dump(data, file)
 
                     DEAL = {}
-                    STEP_STOP_PRICE = None
                     MAX_PROFIT = 0
                     SYMBOL = ''
 

@@ -329,6 +329,19 @@ def parce_tick_size(pointer):
         prt(f'Ошибка при получении данных по tick size: \n{e}', pointer)
 
 
+def check_stop_price_condition(SYMBOL, KLINES, pointer):
+    df = get_futures_klines(SYMBOL, KLINES, pointer, 1)
+    df = prepareDF(df)
+    df = get_bollinger_bands(df)
+    signal = ""  # return value
+    i = KLINES - 1
+    if df[i - 2]['close'] < df[i - 2]['upper_band'] and df[i - 1]['close'] > df[i - 1]['upper_band'] or df[i - 2]['close'] < df[i - 2]['SMA_20'] and df[i - 1]['close'] > df[i - 1]['SMA_20']:
+        return True
+    else:
+        return False
+
+
 def prt(message, pointer):
     telegram_bot_sendtext(pointer + ': ' + message)
     print(pointer + ': ' + message)
+
