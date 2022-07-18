@@ -63,7 +63,7 @@ def main(step):
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
     quantity_precision = TICK_SIZE_DICT[SYMBOL]['quantity_precision'] if TICK_SIZE_DICT[SYMBOL]['quantity_precision'] != 0 else None
-    atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, 3)
+    atr_stop_percent = round(get_current_atr(SYMBOL, pointer) / 100, price_precision)
 
     try:
         getTPSLfrom_telegram(SYMBOL)
@@ -106,6 +106,7 @@ def main(step):
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, price_precision)},'
                         f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, price_precision)}'
                         f'\nATR: {round(atr_stop_percent * 100, price_precision)}', pointer)
+                prt(f'текущее положение: {current_price}, {STOP_PRICE}', pointer)
                 if current_price > STOP_PRICE:
                     # stop loss
                     close_postion_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
