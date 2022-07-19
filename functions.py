@@ -69,7 +69,7 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
             if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
                     df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
                 if df['close'][i] < df['close'][i - 1] < df['close'][i - 2] > df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5] or\
-                    df['close'][i - 1] < df['close'][i - 2] < df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5] > df['close'][i - 6]:
+                        df['close'][i - 1] < df['close'][i - 2] < df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5] > df['close'][i - 6]:
                     prt('сигнал на short', pointer)
                     return 'short'
                 else:
