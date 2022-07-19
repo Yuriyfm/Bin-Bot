@@ -17,7 +17,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = ''
 client = Client(KEY, SECRET)
 SYMBOL_LIST = []
 
@@ -72,7 +72,6 @@ def main(step):
             # close all stop loss orders
             check_and_close_orders(SYMBOL)
             signal = check_if_signal(SYMBOL,  pointer, KLINES, DEAL)
-            signal = 'short'
             if signal == 'restart':
                 SYMBOL = ''
             if signal == 'short':
