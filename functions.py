@@ -335,7 +335,8 @@ def check_stop_price_condition(SYMBOL, KLINES, pointer):
     df = get_bollinger_bands(df)
     signal = ""  # return value
     i = KLINES - 1
-    if df[i - 2]['close'] < df[i - 2]['upper_band'] and df[i - 1]['close'] > df[i - 1]['upper_band'] or df[i - 2]['close'] < df[i - 2]['SMA_20'] and df[i - 1]['close'] > df[i - 1]['SMA_20']:
+    if (df['close'][i - 2] < df['upper_band'][i - 2] and df['close'][i - 1] > df['upper_band'][i - 1]) or\
+            (df['close'][i - 2] < df['SMA_20'][i - 2] and df['close'][i - 1] > df['SMA_20'][i - 1]):
         return True
     else:
         return False
