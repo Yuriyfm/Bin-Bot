@@ -65,9 +65,11 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         signal = ""  # return value
         i = KLINES - 1
 
-        if df['RSI'][i - 2] > 70 > df['RSI'][i - 1]:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1]:
-                if df['close'][i] < df['close'][i - 1] < df['close'][i - 2] > df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5]:
+        if df['RSI'][i - 2] > 72 and 68 > df['RSI'][i - 1]:
+            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
+                    df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
+                if df['close'][i] < df['close'][i - 1] < df['close'][i - 2] > df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5] or\
+                    df['close'][i - 1] < df['close'][i - 2] < df['close'][i - 3] > df['close'][i - 4] > df['close'][i - 5] > df['close'][i - 6]:
                     prt('сигнал на short', pointer)
                     return 'short'
                 else:
@@ -302,7 +304,8 @@ def check_diff(pointer, SMA_1, SMA_2, KLINES):
                 res = get_last_intersection(DF, SMA_1, SMA_2)
                 if res[0] == 'long':
                     cur_price = get_symbol_price(i, pointer)
-                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][KLINES - 2] > 70 and DF['close'][KLINES - 2] > DF['upper_band'][KLINES - 2]:
+                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][KLINES - 2] > 72 and DF['RSI'][KLINES - 1] > 70 \
+                            and DF['close'][KLINES - 2] > DF['upper_band'][KLINES - 2] and DF['close'][KLINES - 1] > DF['upper_band'][KLINES - 1]:
                         prt(f'выбрал валюту {i}', pointer)
                         print(f'выбрал валюту {i}')
                         return i

@@ -91,7 +91,7 @@ def main(step):
 
 
         else:
-            entry_price = position[5]  # enter price
+            entry_price = position[5]
             quantity = position[1]
 
             if open_sl == 'short':
