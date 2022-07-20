@@ -81,9 +81,7 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
             else:
                 prt('Не совпали условия по линиям Боллинджера', pointer)
                 return 'restart'
-        else:
-            prt('Не совпали условия по RSI', pointer)
-            return 'restart'
+
 
 
     except Exception as e:
