@@ -64,6 +64,9 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
 
         signal = ""  # return value
         i = KLINES - 1
+        if df['RSI'][i] < 70:
+            prt('Уровень RSI ниже 70', pointer)
+            return 'restart'
 
         if df['RSI'][i - 2] > 72 and 68 > df['RSI'][i - 1]:
             if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
