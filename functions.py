@@ -62,10 +62,10 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         df = get_rsi(df)
         df = get_bollinger_bands(df)
 
-        signal = ""  # return value
+
         i = KLINES - 1
         if df['RSI'][i - 2] < 70:
-            prt('Уровень RSI ниже 70', pointer)
+            prt('Уровень RSI ниже 70. Restart', pointer)
             return 'restart'
 
         if df['RSI'][i - 2] > 72 and 68 > df['RSI'][i - 1]:
@@ -79,10 +79,12 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
                     prt('Не совпали условия определения пика', pointer)
                     return 'restart'
             else:
-                prt('Не совпали условия по RSI и линиям Боллинджера', pointer)
+                prt('Не совпали условия по линиям Боллинджера', pointer)
                 return 'restart'
+        else:
+            prt('Не совпали условия по RSI', pointer)
+            return 'restart'
 
-        return signal
 
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
