@@ -88,11 +88,13 @@ def main(step):
                     DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
                     DEAL["start price"] = current_price
 
-
-
         else:
-            entry_price = DEAL["start price"]
             quantity = position[1]
+            if "start price" in DEAL:
+                entry_price = DEAL["start price"]
+            else:
+                entry_price = position[5]
+
 
             if open_sl == 'short':
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)

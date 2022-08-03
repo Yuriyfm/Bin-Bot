@@ -68,7 +68,7 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
             prt('Уровень RSI ниже 70. Restart', pointer)
             return 'restart'
 
-        if df['RSI'][i - 2] > 72 and 68 > df['RSI'][i - 1]:
+        if df['RSI'][i - 2] > 70 > df['RSI'][i - 1] and df['RSI'][i - 2] - df['RSI'][i - 1] > 5:
             if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
                     df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
                 prt('сигнал на short', pointer)
@@ -285,7 +285,7 @@ def get_last_intersection(DF, SMA_1, SMA_2):
             trend = 'short'
             intersection_point = i
             break
-    return trend, len(DF) - intersection_point - 1, DF['open'][len(DF) - intersection_point - 1]
+    return trend, intersection_point, DF['open'][len(DF) - intersection_point - 1]
 
 
 def check_diff(pointer, SMA_1, SMA_2, KLINES):
@@ -300,9 +300,9 @@ def check_diff(pointer, SMA_1, SMA_2, KLINES):
                 DF = get_rsi(DF)
                 DF = get_bollinger_bands(DF)
                 res = get_last_intersection(DF, SMA_1, SMA_2)
-                if res[0] == 'long':
+                if res[0] == 'long' and 5 < res[1] < 20:
                     cur_price = get_symbol_price(i, pointer)
-                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][KLINES - 2] > 72 and DF['RSI'][KLINES - 1] > 70 \
+                    if 1 - (res[2] / cur_price) >= 0.05 and DF['RSI'][KLINES - 1] > 72 \
                             and DF['close'][KLINES - 2] > DF['upper_band'][KLINES - 2] and DF['close'][KLINES - 1] > DF['upper_band'][KLINES - 1]:
                         prt(f'выбрал валюту {i}', pointer)
                         print(f'выбрал валюту {i}')
