@@ -302,7 +302,7 @@ def check_diff(pointer, SMA_1, SMA_2, KLINES):
                 res = get_last_intersection(DF, SMA_1, SMA_2)
                 if res[0] == 'long' and 5 < res[1] < 20:
                     cur_price = get_symbol_price(i, pointer)
-                    if 1 - (res[2] / cur_price) >= 0.05 and DF['RSI'][KLINES - 1] > 72 \
+                    if 1 - (res[2] / cur_price) >= 0.03 and DF['RSI'][KLINES - 1] > 72 \
                             and DF['close'][KLINES - 2] > DF['upper_band'][KLINES - 2] and DF['close'][KLINES - 1] > DF['upper_band'][KLINES - 1]:
                         prt(f'выбрал валюту {i}', pointer)
                         print(f'выбрал валюту {i}')
