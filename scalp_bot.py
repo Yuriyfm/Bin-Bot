@@ -86,12 +86,12 @@ def main(step):
                         pointer)
                     DEAL['type'] = signal
                     DEAL['start time'] = now.strftime("%d-%m-%Y %H:%M")
-                    DEAL['start price'] = current_price
+                    DEAL["start price"] = current_price
 
 
 
         else:
-            entry_price = position[5]
+            entry_price = DEAL["start price"]
             quantity = position[1]
 
             if open_sl == 'short':
