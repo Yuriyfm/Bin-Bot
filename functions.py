@@ -72,11 +72,6 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
             #         df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
             prt('сигнал на short', pointer)
             return 'short'
-        else:
-            prt('Не совпали условия по RSI', pointer)
-            return 'restart'
-
-
 
     except Exception as e:
         prt(f'Ошибка в функции проверки сигнала: \n{e}', pointer)
