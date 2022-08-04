@@ -61,21 +61,20 @@ def check_if_signal(SYMBOL, pointer, KLINES, DEAL):
         df = prepareDF(df)
         df = get_rsi(df)
         df = get_bollinger_bands(df)
-
-
         i = KLINES - 1
+
         if df['RSI'][i - 2] < 70:
             prt('Уровень RSI ниже 70. Restart', pointer)
             return 'restart'
 
         if df['RSI'][i - 2] > 70 > df['RSI'][i - 1] and df['RSI'][i - 2] - df['RSI'][i - 1] > 5:
-            if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
-                    df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
-                prt('сигнал на short', pointer)
-                return 'short'
-            else:
-                prt('Не совпали условия по линиям Боллинджера', pointer)
-                return 'restart'
+            # if df['close'][i - 2] > df['upper_band'][i - 2] and df['close'][i - 1] < df['upper_band'][i - 1] or\
+            #         df['close'][i - 3] > df['upper_band'][i - 3] and df['close'][i - 2] < df['upper_band'][i - 2]:
+            prt('сигнал на short', pointer)
+            return 'short'
+        else:
+            prt('Не совпали условия по RSI', pointer)
+            return 'restart'
 
 
 
