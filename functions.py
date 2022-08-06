@@ -324,14 +324,15 @@ def parce_tick_size(pointer):
         prt(f'Ошибка при получении данных по tick size: \n{e}', pointer)
 
 
-def check_stop_price_condition(SYMBOL, KLINES, pointer):
+def check_stop_price_condition(SYMBOL, KLINES, pointer, entry_price, current_price):
     df = get_futures_klines(SYMBOL, KLINES, pointer, 1)
     df = prepareDF(df)
     df = get_bollinger_bands(df)
     signal = ""  # return value
     i = KLINES - 1
     if (df['close'][i - 2] < df['upper_band'][i - 2] and df['close'][i - 1] > df['upper_band'][i - 1]) or\
-            (df['close'][i - 2] < df['SMA_20'][i - 2] and df['close'][i - 1] > df['SMA_20'][i - 1]):
+            (df['close'][i - 2] < df['SMA_20'][i - 2] and df['close'][i - 1] > df['SMA_20'][i - 1]) \
+            and 1 - (current_price / entry_price) > 0.007:
         return True
     else:
         return False

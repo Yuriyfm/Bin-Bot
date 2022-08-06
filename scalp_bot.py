@@ -98,7 +98,7 @@ def main(step):
 
             if open_sl == 'short':
                 now = datetime.datetime.now() + datetime.timedelta(hours=7)
-                stop_condition = check_stop_price_condition(SYMBOL, KLINES, pointer)
+                stop_condition = check_stop_price_condition(SYMBOL, KLINES, pointer, entry_price, current_price)
                 if step % 30 == 0:
                     prt(f'short\nВход: {entry_price}\nТекущая: {current_price},\nСтоп: {round(STOP_PRICE, price_precision)},'
                         f'\nТекущий %:{round((1 - current_price /  entry_price) * 100, price_precision)}', pointer)
@@ -107,7 +107,7 @@ def main(step):
                     close_position_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
                     if close_position_res:
                         profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
-                        prt(f'Завершил сделку {open_sl} с результатом {profit}% по курсу {current_price}', pointer)
+                        prt(f'Завершил сделку {open_sl} {SYMBOL} с результатом {profit}% по курсу {current_price}, max profit={MAX_PROFIT}', pointer)
                         if profit > 0:
                             STAT['positive'] += 1
                         else:
