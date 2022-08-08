@@ -106,7 +106,7 @@ def main(step):
                     # stop loss
                     close_position_res = close_position(SYMBOL, open_sl, round(abs(quantity), quantity_precision), pointer)
                     if close_position_res:
-                        profit = round(((current_price / entry_price - 1) * -100) - 0.045, price_precision)
+                        profit = round(((1 - current_price / entry_price) * 100) - 0.045, price_precision)
                         prt(f'Завершил сделку {open_sl} {SYMBOL} с результатом {profit}% по курсу {current_price}, max profit={MAX_PROFIT}', pointer)
                         if profit > 0:
                             STAT['positive'] += 1
