@@ -17,7 +17,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 KEY = os.getenv("KEY")
 SECRET = os.getenv("SECRET")
-SYMBOL = 'ETHUSDT'
+SYMBOL = ''
 client = Client(KEY, SECRET)
 SYMBOL_LIST = []
 
@@ -55,8 +55,8 @@ def main(step):
             f'\nБаланс: {get_wallet_balance()}'
             f'\nТекущая сделка: {DEAL}', pointer)
 
-    # if SYMBOL == '':
-    #     SYMBOL = check_diff(pointer, SMA_1, SMA_2, KLINES)
+    if SYMBOL == '':
+        SYMBOL = check_diff(pointer, SMA_1, SMA_2, KLINES)
     current_price = get_symbol_price(SYMBOL, pointer)
     price_precision = TICK_SIZE_DICT[SYMBOL]['price_precision'] if TICK_SIZE_DICT[SYMBOL]['price_precision'] != 0 else None
     quantity_precision = TICK_SIZE_DICT[SYMBOL]['quantity_precision'] if TICK_SIZE_DICT[SYMBOL]['quantity_precision'] != 0 else None
