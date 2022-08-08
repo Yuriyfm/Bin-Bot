@@ -162,8 +162,9 @@ def get_opened_positions(symbol, pointer):
     try:
         status = client.futures_account()
         positions = pd.DataFrame(status['positions'])
-        a = positions[positions['symbol'] == symbol]['positionAmt'].astype(float).tolist()[0]
-        leverage = int(positions[positions['symbol'] == symbol]['leverage'])
+        position = positions[positions['symbol'] == symbol]
+        a = position['positionAmt'].astype(float).tolist()[0]
+        leverage = position['leverage']
         entryprice = positions[positions['symbol'] == symbol]['entryPrice']
         profit = float(status['totalUnrealizedProfit'])
         balance = round(float(status['totalWalletBalance']), 2)
@@ -173,7 +174,7 @@ def get_opened_positions(symbol, pointer):
             pos = "short"
         else:
             pos = ""
-        return [pos, a, profit, leverage, balance, round(float(entryprice), 3), 0]
+        return [pos, a, profit, leverage, balance, round(float(entryprice[80]), 3), 0]
     except Exception as e:
         prt(f'Ошибка при получении данных по открытой позиции: \n{e}', pointer)
 
